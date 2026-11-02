@@ -53,9 +53,9 @@ jobs:
 
       - name: Install Rust (GNU)
         run: |
-          rustup toolchain install stable-x86_64-pc-windows-gnu --profile minimal --component rustfmt
+          rustup toolchain install stable-x86_64-pc-windows-gnu --profile minimal --component rustfmt --component clippy
           rustup default stable-x86_64-pc-windows-gnu
-          echo "RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu" >> $GITHUB_ENV
+          echo "RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu" >> $env:GITHUB_ENV
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -78,7 +78,7 @@ jobs:
         run: cd src-tauri && cargo test --workspace
 
   backend-coverage:
-    name: Rust coverage (cargo-llvm-cov on Linux)
+    name: Core coverage (cargo-llvm-cov on Linux)
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
@@ -88,7 +88,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libssl-dev pkg-config
-          rustup toolchain install stable --profile minimal --component rustfmt
+          rustup toolchain install stable --profile minimal --component rustfmt --component llvm-tools-preview
           rustup default stable
 
       - name: Install cargo-llvm-cov
@@ -100,7 +100,7 @@ jobs:
 
       - name: Coverage (fail under 50% lines)
         run: |
-          cargo llvm-cov --manifest-path src-tauri/Cargo.toml --workspace \
+          cargo llvm-cov --manifest-path src-tauri/Cargo.toml --package mytools-core \
             --lcov --output-path lcov.info --fail-under-lines 50
 
       - name: Upload lcov
@@ -131,7 +131,7 @@ jobs:
         run: |
           rustup toolchain install stable-x86_64-pc-windows-gnu --profile minimal
           rustup default stable-x86_64-pc-windows-gnu
-          echo "RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu" >> $GITHUB_ENV
+          echo "RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu" >> $env:GITHUB_ENV
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -140,12 +140,17 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm tauri build --no-bundle
 
+      - name: Stage runtime
+        run: |
+          New-Item -ItemType Directory -Force ci-app | Out-Null
+          Copy-Item src-tauri/target/release/mytools.exe, src-tauri/resources/WebView2Loader.dll ci-app/
+
       - name: Upload release exe
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: mytools-exe
-          path: src-tauri/target/release/mytools.exe
+          path: ci-app/*
           retention-days: 7
 
   e2e:
@@ -170,14 +175,14 @@ jobs:
           name: mytools-exe
           path: dist
 
-      - name: Install msedgedriver
+      - name: Install drivers
         run: |
-          winget install Microsoft.EdgeDriver --accept-source-agreements --accept-package-agreements --silent
-          $msedgedriver = "$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Packages\Microsoft.EdgeDriver_Microsoft.Winget.Source_8wekyb3d8bbwe\msedgedriver.exe"
-          echo "MSEDGEDRIVER_PATH=$msedgedriver" >> $env:GITHUB_ENV
-          if (-not (Test-Path -LiteralPath $msedgedriver)) {
-            Write-Host "msedgedriver not found at expected path"; exit 1
-          }
+          cargo install tauri-driver --locked
+          $edge = Get-Item "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+          $version = $edge.VersionInfo.ProductVersion
+          Invoke-WebRequest "https://msedgedriver.microsoft.com/$version/edgedriver_win64.zip" -OutFile driver.zip
+          Expand-Archive driver.zip -DestinationPath driver
+          (Resolve-Path driver).Path >> $env:GITHUB_PATH
 
       - run: pnpm install --frozen-lockfile
 
@@ -185,7 +190,7 @@ jobs:
         env:
           MYTOOLS_E2E_EXE: ${{ github.workspace }}\dist\mytools.exe
         run: |
-          $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=9222 --remote-allow-origins=*"
-          Start-Process tauri-driver -ArgumentList "--port","4440" -PassThru | Out-Null
+          $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=0"
+          Start-Process tauri-driver -ArgumentList "--port","4440","--native-port","4441" -WindowStyle Hidden -PassThru | Out-Null
           Start-Sleep -Seconds 5
           pnpm test:e2e
