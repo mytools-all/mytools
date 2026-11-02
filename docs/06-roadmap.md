@@ -146,7 +146,7 @@
 |---|---|---|---|---|---|
 | 1 | 计算稿纸 | ✅ | `rubick-plugin-calc` | `clipboard.write` | 独立包 `独立仓库 mytools-calc` |
 | 2 | Markdown 编辑器 | ✅ | `rubick-markdown` | `storage.get/set`、`clipboard.write` | 独立包 `独立仓库 mytools-markdown` |
-| 3 | JSON 编辑器 | ✅ 内置 | `rubick-json-editor` | `clipboard.write` | 随应用播种 `mytools-json` |
+| 3 | JSON 编辑器 | ✅ | `rubick-json-editor` | `clipboard.write` | 独立仓库 `mytools-json` |
 | 4 | ipconfig | ✅ | `ip-config-rubick-plugin` | `system.netinterfaces`（新增）、`clipboard.write` | 独立包 `独立仓库 mytools-ipconfig` |
 | 5 | 颜色助手 | ✅ | `rubick-color` | `clipboard.write` | 独立包 `独立仓库 mytools-color` |
 | 6 | 系统剪贴板 | ✅ | `rubick-system-clipboard` | `clipboard.history/write/remove` | 独立包 `独立仓库 mytools-clipboard` |

@@ -20,4 +20,4 @@ plugin.json.name 是稳定运行时身份，例如 mytools-search；package.json
 
 ## 索引
 
-mytools-home 的 plugins/database.json 使用 schemaVersion: 1 和 plugins 数组，每项包含 name、npm、version、repository。当前宿主商店读取 src/data/toolCatalog.ts 中的目录快照，安装包从 npm 下载；未来可在保留离线回退和字段验证的前提下读取 GitHub JSON。
+mytools-home 的 plugins/database.json 使用 schemaVersion: 1 和 plugins 数组，每项包含 name、npm、version、repository 和 published。仅 published 为 true 的条目可视为已经发布；未发布的条目用于跟踪准备中的插件。当前宿主商店读取 src/data/toolCatalog.ts 中的目录快照，安装包从 npm 下载；未来可在保留离线回退和字段验证的前提下读取 GitHub JSON。
