@@ -1,0 +1,80 @@
+:root {
+  font-family: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  --panel-bg: #15191f;
+  --panel-bg-strong: #181e26;
+  --surface-bg: #1d242e;
+  --panel-fg: #e8edf5;
+  --panel-border: #ffffff0d;
+  --panel-control-border: #ffffff14;
+  --text-dim: #a9b4c4;
+  --text-dim-strong: #7e8b9e;
+  --chip-bg: #ffffff07;
+  --hover-bg: #ffffff0b;
+  --accent: #83b9ff;
+  --accent-soft: #83b9ff14;
+  --scrollbar: #ffffff24;
+  --danger: #f2848b;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --panel-bg: #f5f7fa;
+  --panel-bg-strong: #fafbfd;
+  --surface-bg: #ffffff;
+  --panel-fg: #263244;
+  --panel-border: #e5eaf0;
+  --panel-control-border: #dce3ec;
+  --text-dim: #5f6e82;
+  --text-dim-strong: #7b889a;
+  --chip-bg: #edf1f6;
+  --hover-bg: #eaf0f7;
+  --accent: #3275ce;
+  --accent-soft: #e8f1ff;
+  --scrollbar: #bcc7d5;
+  --danger: #ce4555;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+body { color: var(--panel-fg); }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+* { scrollbar-width: thin; scrollbar-color: var(--scrollbar) transparent; }
+#app { width: 100vw; height: 100vh; display: flex; }
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --panel-bg: #f5f7fa;
+    --panel-bg-strong: #fafbfd;
+    --surface-bg: #ffffff;
+    --panel-fg: #263244;
+    --panel-border: #e5eaf0;
+    --panel-control-border: #dce3ec;
+    --text-dim: #5f6e82;
+    --text-dim-strong: #7b889a;
+    --chip-bg: #edf1f6;
+    --hover-bg: #eaf0f7;
+    --accent: #3275ce;
+    --accent-soft: #e8f1ff;
+    --scrollbar: #bcc7d5;
+    --danger: #ce4555;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

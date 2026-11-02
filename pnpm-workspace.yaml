@@ -1,0 +1,9 @@
+# pnpm workspace settings.
+#
+# MyTools is a single-package project today; this file exists so pnpm
+# 11+ reads settings from a stable location instead of package.json.
+# Add a `packages:` block here once `plugins/*` becomes a workspace.
+
+# v0.1: allow all build scripts to run. Tighten with `allowBuilds:` +
+# explicit package allowlist in v0.2 (see docs/07-testing.md §5 CI).
+dangerouslyAllowAllBuilds: true

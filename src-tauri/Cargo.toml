@@ -1,0 +1,96 @@
+[package]
+name = "mytools"
+version = "0.1.0"
+description = "Lightweight plugin toolbox"
+authors = ["MyTools Contributors"]
+license = "MIT"
+edition = "2021"
+rust-version = "1.77"
+
+[workspace]
+members = ["crates/mytools-core"]
+resolver = "2"
+
+[lib]
+name = "mytools_lib"
+# Desktop build (Windows / macOS / Linux) only needs `rlib` — the binary
+# in main.rs links directly into the lib. `staticlib` and `cdylib` are
+# kept commented out to avoid MinGW export-ordinal overflow once the
+# plugin count grows (see docs/03-tech-stack.md §5).
+# crate-type = ["staticlib", "cdylib", "rlib"]
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+mytools-core = { path = "crates/mytools-core" }
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-opener = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-store = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["sync", "rt", "macros", "time"] }
+thiserror = "1"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+
+fuzzy-matcher = "0.3"
+walkdir = "2"
+notify = "6"
+notify-debouncer-mini = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+ureq = "2"
+tiny_http = "0.12"
+sysinfo = "0.31"
+image = { version = "0.25", default-features = false, features = ["png"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Globalization",
+    "Win32_System_LibraryLoader",
+    "Win32_Graphics_Gdi",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_NetworkManagement_Ndis",
+    "Win32_Networking_WinSock",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Registry",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+windows = { version = "0.57", features = [
+    "implement",
+    "Win32_System_Ole",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_SystemServices",
+    "Win32_System_Com",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_PropertiesSystem",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Graphics_Gdi",
+    "Win32_Storage_FileSystem",
+    "Win32_Storage_EnhancedStorage",
+    "Win32_Foundation",
+] }
+windows-core = "0.57"
+image = { version = "0.25", default-features = false, features = ["png"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
