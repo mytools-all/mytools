@@ -19,7 +19,7 @@ pnpm install --frozen-lockfile
 pnpm tauri dev
 ```
 
-本仓库可独立构建，无需克隆任何插件仓库。插件商店使用随应用维护的目录快照，安装时下载 npm 包。集中索引保存在 mytools-home，当前尚未动态读取远程 JSON。开发者也可安装本地目录、zip 或 tgz。
+本仓库可独立构建，无需克隆任何插件仓库。插件商店进入时读取 mytools-home/plugins/database.json，分类与详情基本信息都由该索引提供，安装时下载指定版本的 npm 包。更新失败时保留上次有效缓存，首次离线使用自动生成的随应用快照。商店安装使用统一插件根目录。开发者也可安装本地目录、zip 或 tgz。
 
 ## 验证与打包
 
@@ -39,3 +39,5 @@ pnpm tauri build
 ## 文档与许可
 
 架构和插件 API 见 [docs](docs/README.md)。项目代码使用 [MIT](LICENSE)，第三方依赖保留各自的许可证。
+
+离线目录快照无需手工维护。发布应用前可运行 `pnpm catalog:sync` 从统一索引更新并校验快照；普通构建不依赖此联网步骤。详情页可确认卸载已安装插件，插件存储数据保留。

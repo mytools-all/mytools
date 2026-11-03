@@ -4,6 +4,7 @@ pub mod app_icon;
 pub mod app_index;
 pub mod app_launcher;
 pub mod capability;
+pub mod catalog;
 pub mod clipboard;
 pub mod color;
 pub mod dir_grants;

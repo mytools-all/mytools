@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import TopTabNav from "@/components/TopTabNav.vue";
 import { useToolCatalogStore } from "@/stores/toolCatalog";
 import { fallbackIconDataUri } from "@/lib/iconFallback";
@@ -9,6 +9,7 @@ import type { ToolEntry } from "@/data/toolCatalog";
 const store = useToolCatalogStore();
 const plugins = usePluginsStore();
 const emit = defineEmits<{detail:[name:string]}>();
+onMounted(() => { void store.refresh(); });
 
 const tabs = computed(() => [
   { id: "all", label: "全部", count: store.visibleEntries.length },
@@ -49,8 +50,10 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
         spellcheck="false"
         placeholder="搜索工具…"
       />
+      <button class="tc__btn" :disabled="store.loading" @click="store.refresh(true)">{{ store.loading ? '更新中…' : '刷新目录' }}</button>
     </div>
     <TopTabNav v-model="store.category as unknown as string" :tabs="tabs" />
+    <p v-if="store.loadError" class="tc__banner" role="status">{{ store.loadError }}</p>
 
     <p v-if="store.error" class="tc__banner tc__banner--err">{{ store.error }}</p>
     <p v-else-if="store.notice" class="tc__banner tc__banner--ok">
@@ -65,7 +68,7 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
       <article v-for="entry in store.visibleEntries" :key="entry.name" class="tc__card" role="button" tabindex="0" @click="emit('detail',entry.name)" @keydown.enter.self="emit('detail',entry.name)" @keydown.space.self.prevent="emit('detail',entry.name)">
         <header class="tc__card-head">
           <img
-            :src="plugins.plugins.find(p=>p.manifest.name===entry.name)?.icon || fallbackIconDataUri(entry.title)"
+            :src="plugins.plugins.find(p=>p.manifest.name===entry.name)?.icon || entry.icon || fallbackIconDataUri(entry.title)"
             :alt="entry.title"
             class="tc__icon"
           />
@@ -85,7 +88,7 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
           <button
             v-if="store.stateOf(entry) === 'installable'"
             class="tc__btn tc__btn--primary"
-            :disabled="store.busy === entry.name"
+            :disabled="!!store.busy"
             @click.stop="onInstall(entry)"
           >
             {{ store.busy === entry.name ? "安装中…" : "安装" }}

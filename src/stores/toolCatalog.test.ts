@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 import { useToolCatalogStore } from "@/stores/toolCatalog";
 import { TOOL_CATALOG } from "@/data/toolCatalog";
+import snapshot from "@/data/catalogSnapshot.json";
 
 const openMock = vi.fn<(args?: unknown) => Promise<string | null>>(async () => null);
 const invokeMock = vi.fn<(cmd: string, args?: unknown) => Promise<unknown>>(
@@ -23,6 +24,7 @@ vi.mock("@/lib/tauri", () => ({
 
 describe("tool catalog store", () => {
   beforeEach(() => {
+    localStorage.clear();
     setActivePinia(createPinia());
     openMock.mockReset();
     openMock.mockResolvedValue(null);
@@ -30,12 +32,13 @@ describe("tool catalog store", () => {
     invokeMock.mockResolvedValue(null);
   });
 
-  it("exposes every planned tool with a rubick reference", () => {
+  it("exposes all indexed plugins with install metadata", () => {
     const s = useToolCatalogStore();
     expect(s.entries.length).toBeGreaterThanOrEqual(11);
     for (const entry of s.entries) {
       expect(entry.title.length).toBeGreaterThan(0);
-      expect(entry.reference?.package ?? "").toBeTruthy();
+      expect(entry.npm).toMatch(/^@mytools-all\//);
+      expect(entry.category).toBeTruthy();
     }
   });
 
@@ -85,6 +88,7 @@ describe("tool catalog store", () => {
 
     expect(name).toBe("mytools-demo");
     expect(invokeMock).toHaveBeenCalledWith("plugin_install_npm", { spec: entry.npmSpec });
+    expect(openMock).not.toHaveBeenCalled();
     expect(s.notice).toContain(entry.title);
   });
 
@@ -107,5 +111,42 @@ describe("tool catalog store", () => {
 
     expect(name).toBeNull();
     expect(s.error).toContain("bad package");
+  });
+
+  it("loads remote metadata, categories and aliases then restores its cache", async () => {
+    const data = structuredClone(snapshot);
+    data.plugins[0].title = "远程 Demo";
+    data.plugins[0].category = "远程分类";
+    invokeMock.mockResolvedValue(data);
+    const store = useToolCatalogStore();
+    await store.refresh(true);
+    expect(store.source).toBe("remote");
+    expect(store.categories).toContain("远程分类");
+    store.query = "mytools-demo";
+    expect(store.visibleEntries[0].title).toBe("远程 Demo");
+    setActivePinia(createPinia());
+    const restored = useToolCatalogStore();
+    expect(restored.source).toBe("cache");
+    expect(restored.entries[0].title).toBe("远程 Demo");
+  });
+
+  it("keeps valid entries when remote JSON is invalid or unavailable", async () => {
+    const store = useToolCatalogStore();
+    const names = store.entries.map(entry => entry.name);
+    invokeMock.mockResolvedValue({schemaVersion: 2, plugins: [{name: "broken"}]});
+    await store.refresh(true);
+    expect(store.entries.map(entry => entry.name)).toEqual(names);
+    expect(store.loadError).toContain("继续使用已有目录");
+    invokeMock.mockRejectedValue(new Error("offline"));
+    await store.refresh(true);
+    expect(store.entries.map(entry => entry.name)).toEqual(names);
+  });
+
+  it("does not open a local directory picker for an incomplete store entry", async () => {
+    const store = useToolCatalogStore();
+    await store.install({...TOOL_CATALOG.find(entry => entry.status === "ready")!, npmSpec: undefined});
+    expect(openMock).not.toHaveBeenCalled();
+    expect(invokeMock).not.toHaveBeenCalled();
+    expect(store.error).toContain("npm");
   });
 });

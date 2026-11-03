@@ -1,5 +1,6 @@
 pub mod apps;
 pub mod capabilities;
+pub mod catalog;
 pub mod clipboard;
 pub mod file_search;
 pub mod file_tools;

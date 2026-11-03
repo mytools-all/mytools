@@ -1,0 +1,492 @@
+{
+  "schemaVersion": 2,
+  "plugins": [
+    {
+      "name": "mytools-demo",
+      "npm": "@mytools-all/mytools-demo",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-demo",
+      "published": true,
+      "title": "MyTools Demo",
+      "description": "测试插件：演示 MyTools 桥接（复制文本 / 打开链接 / 读取系统路径）",
+      "category": "开发",
+      "author": "MyTools",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-demo#readme",
+      "capabilities": [
+        "clipboard.write",
+        "shell.open",
+        "system.path"
+      ],
+      "features": [
+        "演示 MyTools bridge"
+      ],
+      "keywords": [
+        "mytools-demo",
+        "demo",
+        "示例插件",
+        "demo-hello"
+      ],
+      "notes": [
+        "安装后点击“打开”进入插件，也可从主页搜索启动。",
+        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
+      ],
+      "icon": "https://raw.githubusercontent.com/mytools-all/mytools-demo/main/icon.svg",
+      "replaces": [
+        "demo-hello"
+      ]
+    },
+    {
+      "name": "mytools-calc",
+      "npm": "@mytools-all/mytools-calc",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-calc",
+      "published": true,
+      "title": "计算稿纸",
+      "description": "表达式求值 + 稿纸记录：算完留痕，随时复制结果。",
+      "category": "效率",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-calc#readme",
+      "capabilities": [
+        "clipboard.write",
+        "storage.get",
+        "storage.set"
+      ],
+      "features": [
+        "递归下降表达式求值",
+        "稿纸历史记录",
+        "一键复制结果"
+      ],
+      "keywords": [
+        "计算稿纸",
+        "计算器",
+        "计算",
+        "calc"
+      ],
+      "notes": [
+        "安装后点击“打开”进入插件，也可从主页搜索启动。",
+        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
+      ],
+      "reference": {
+        "package": "rubick-plugin-calc",
+        "label": "计算器（rubick-plugin-calc）",
+        "url": "https://www.npmjs.com/package/rubick-plugin-calc"
+      }
+    },
+    {
+      "name": "mytools-clipboard",
+      "npm": "@mytools-all/mytools-clipboard",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-clipboard",
+      "published": true,
+      "title": "系统剪贴板",
+      "description": "剪贴板历史：浏览、复制、删除之前的复制内容。",
+      "category": "系统",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-clipboard#readme",
+      "capabilities": [
+        "clipboard.history",
+        "clipboard.write",
+        "clipboard.remove"
+      ],
+      "features": [
+        "历史列表",
+        "搜索过滤",
+        "复制与删除"
+      ],
+      "keywords": [
+        "剪贴板",
+        "剪贴板历史",
+        "clipboard"
+      ],
+      "notes": [
+        "安装后点击“打开”进入插件，也可从主页搜索启动。",
+        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
+      ],
+      "reference": {
+        "package": "rubick-system-clipboard",
+        "label": "系统剪贴板（rubick-system-clipboard）",
+        "url": "https://www.npmjs.com/package/rubick-system-clipboard"
+      }
+    },
+    {
+      "name": "mytools-color",
+      "npm": "@mytools-all/mytools-color",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-color",
+      "published": true,
+      "title": "颜色助手",
+      "description": "颜色转换与配色：HEX / RGB / HSL 互转，色板与对比度检查。",
+      "category": "效率",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-color#readme",
+      "capabilities": [
+        "clipboard.write",
+        "storage.get",
+        "storage.set"
+      ],
+      "features": [
+        "HEX / RGB / HSL 互转",
+        "取色板",
+        "对比度检查"
+      ],
+      "keywords": [
+        "颜色",
+        "颜色助手",
+        "配色",
+        "color"
+      ],
+      "notes": [
+        "安装后点击“打开”进入插件，也可从主页搜索启动。",
+        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
+      ],
+      "reference": {
+        "package": "rubick-color",
+        "label": "颜色助手（rubick-color）",
+        "url": "https://www.npmjs.com/package/rubick-color"
+      }
+    },
+    {
+      "name": "mytools-color-picker",
+      "npm": "@mytools-all/mytools-color-picker",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-color-picker",
+      "published": true,
+      "title": "取色器",
+      "description": "屏幕取色：跟随鼠标读取像素颜色，复制 HEX / RGB。",
+      "category": "效率",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-color-picker#readme",
+      "capabilities": [
+        "clipboard.write",
+        "storage.get",
+        "storage.set",
+        "screen.pickcolor"
+      ],
+      "features": [
+        "跟随鼠标取色",
+        "放大镜预览",
+        "复制 HEX / RGB"
+      ],
+      "keywords": [
+        "取色",
+        "qs",
+        "colorpicker",
+        "屏幕取色"
+      ],
+      "notes": [
+        "安装后点击“打开”进入插件，也可从主页搜索启动。",
+        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
+      ],
+      "reference": {
+        "package": "rubick-system-color-picker",
+        "label": "取色器（rubick-system-color-picker）",
+        "url": "https://www.npmjs.com/package/rubick-system-color-picker"
+      }
+    },
+    {
+      "name": "mytools-ctool",
+      "npm": "@mytools-all/mytools-ctool",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-ctool",
+      "published": true,
+      "title": "Ctool",
+      "description": "开发小工具集：编码转换、时间戳、哈希、正则、URL 解析。",
+      "category": "开发",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-ctool#readme",
+      "capabilities": [
+        "clipboard.write"
+      ],
+      "features": [
+        "Base64 / URL 编解码",
+        "时间戳与哈希",
+        "正则与 JSON 工具"
+      ],
+      "keywords": [
+        "Ctool",
+        "开发工具",
+        "编码",
+        "Base64",
+        "时间戳",
+        "哈希",
+        "正则"
+      ],
+      "notes": [
+        "安装后点击“打开”进入插件，也可从主页搜索启动。",
+        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
+      ],
+      "reference": {
+        "package": "rubick-ctool",
+        "label": "Ctool（rubick-ctool）",
+        "url": "https://www.npmjs.com/package/rubick-ctool"
+      }
+    },
+    {
+      "name": "mytools-hello",
+      "npm": "@mytools-all/mytools-hello",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-hello",
+      "published": true,
+      "title": "MyTools 能力示例",
+      "description": "MyTools 示例插件：读取剪贴板与应用列表，演示宿主能力调用。",
+      "category": "开发",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-hello#readme",
+      "capabilities": [
+        "clipboard.read",
+        "app.list"
+      ],
+      "features": [
+        "打开官方示例"
+      ],
+      "keywords": [
+        "官方示例",
+        "hello"
+      ],
+      "notes": [
+        "安装后点击“打开”进入插件，也可从主页搜索启动。",
+        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
+      ]
+    },
+    {
+      "name": "mytools-ipconfig",
+      "npm": "@mytools-all/mytools-ipconfig",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-ipconfig",
+      "published": true,
+      "title": "ipconfig",
+      "description": "本机网卡与 IP 信息一览：IPv4、网关、MAC、DNS。",
+      "category": "系统",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-ipconfig#readme",
+      "capabilities": [
+        "system.netinterfaces",
+        "clipboard.write",
+        "net.fetch",
+        "system.networkdetails"
+      ],
+      "features": [
+        "网卡列表",
+        "IPv4 / IPv6 地址",
+        "网关与 DNS"
+      ],
+      "keywords": [
+        "ip",
+        "ipconfig",
+        "我的IP",
+        "网卡"
+      ],
+      "notes": [
+        "本机网络配置可离线查看；公网 IP 与连通性测试需要联网，并可能受到代理影响。"
+      ],
+      "reference": {
+        "package": "ip-config-rubick-plugin",
+        "label": "ip-config（ip-config-rubick-plugin）",
+        "url": "https://www.npmjs.com/package/ip-config-rubick-plugin"
+      }
+    },
+    {
+      "name": "mytools-json",
+      "npm": "@mytools-all/mytools-json",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-json",
+      "published": true,
+      "title": "JSON 编辑器",
+      "description": "JSON 格式化、压缩、查询和格式转换。",
+      "category": "开发",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-json#readme",
+      "capabilities": [
+        "clipboard.write"
+      ],
+      "features": [
+        "格式化",
+        "压缩",
+        "复制结果"
+      ],
+      "keywords": [
+        "JSON 格式化",
+        "json",
+        "JSON 编辑器"
+      ],
+      "notes": [
+        "安装后点击“打开”进入插件，也可从主页搜索启动。",
+        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
+      ],
+      "reference": {
+        "package": "rubick-json-editor",
+        "label": "JSON 编辑器（rubick-json-editor）",
+        "url": "https://www.npmjs.com/package/rubick-json-editor"
+      }
+    },
+    {
+      "name": "mytools-markdown",
+      "npm": "@mytools-all/mytools-markdown",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-markdown",
+      "published": true,
+      "title": "Markdown 编辑器",
+      "description": "左写右看：实时预览渲染，草稿自动保存。",
+      "category": "效率",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-markdown#readme",
+      "capabilities": [
+        "storage.get",
+        "storage.set",
+        "clipboard.write",
+        "shell.open",
+        "fs.exporttext"
+      ],
+      "features": [
+        "实时预览",
+        "标题/列表/引用/代码渲染",
+        "草稿自动保存"
+      ],
+      "keywords": [
+        "Markdown",
+        "md",
+        "编辑器"
+      ],
+      "notes": [
+        "笔记自动保存到插件存储，支持分类、导入和导出。",
+        "卸载或清理数据前请先导出备份。"
+      ],
+      "reference": {
+        "package": "rubick-markdown",
+        "label": "Markdown 编辑器（rubick-markdown）",
+        "url": "https://www.npmjs.com/package/rubick-markdown"
+      }
+    },
+    {
+      "name": "mytools-ocr",
+      "npm": "@mytools-all/mytools-ocr",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-ocr",
+      "published": true,
+      "title": "讯飞 OCR",
+      "description": "图片识别为文字：调用讯飞开放平台 OCR 接口（需配置密钥）。",
+      "category": "效率",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-ocr#readme",
+      "capabilities": [
+        "net.fetch",
+        "storage.get",
+        "storage.set",
+        "storage.del",
+        "clipboard.write"
+      ],
+      "features": [
+        "图片拖拽识别",
+        "识别结果编辑",
+        "密钥本地保存"
+      ],
+      "keywords": [
+        "OCR",
+        "文字识别",
+        "讯飞OCR",
+        "图片文字"
+      ],
+      "notes": [
+        "需要自行配置已开通的讯飞 API 凭据；识别请求会发送所选图片。"
+      ],
+      "reference": {
+        "package": "rubick-xunfei-ocr",
+        "label": "讯飞 OCR（rubick-xunfei-ocr）",
+        "url": "https://www.npmjs.com/package/rubick-xunfei-ocr"
+      }
+    },
+    {
+      "name": "mytools-rename",
+      "npm": "@mytools-all/mytools-rename",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-rename",
+      "published": true,
+      "title": "文件批量重命名",
+      "description": "批量改名：规则预览、冲突检测、一次确认。",
+      "category": "文件",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-rename#readme",
+      "capabilities": [
+        "fs.pickdirectory",
+        "fs.pickfiles",
+        "fs.search",
+        "fs.renamemany",
+        "clipboard.write",
+        "fs.importdropped"
+      ],
+      "features": [
+        "批量规则预览",
+        "冲突检测",
+        "撤销清单"
+      ],
+      "keywords": [
+        "重命名",
+        "批量重命名",
+        "rename"
+      ],
+      "notes": [
+        "选择或拖入文件 / 文件夹，设置规则后检查原名与新名。",
+        "执行前需要能力与目录授权；不覆盖现有文件，支持撤销上次操作。"
+      ],
+      "reference": {
+        "package": "utools-batch-rename",
+        "label": "文件批量重命名（rubick-plugin-rename）",
+        "url": "https://www.u-tools.cn/plugins/topic/74/"
+      }
+    },
+    {
+      "name": "mytools-search",
+      "npm": "@mytools-all/mytools-search",
+      "version": "0.1.0",
+      "repository": "https://github.com/mytools-all/mytools-search",
+      "published": true,
+      "title": "本地搜索",
+      "description": "使用 Everything 索引搜索全盘文件与文件夹，支持原生搜索语法和预览。",
+      "category": "文件",
+      "author": "MyTools Contributors",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-search#readme",
+      "capabilities": [
+        "fs.searchstatus",
+        "fs.globalsearch",
+        "fs.searchpreview",
+        "shell.open",
+        "shell.reveal",
+        "clipboard.write",
+        "app.list",
+        "app.launch"
+      ],
+      "features": [
+        "Everything 索引",
+        "分类与快捷键",
+        "文件预览与定位"
+      ],
+      "keywords": [
+        "本地搜索",
+        "文件搜索",
+        "everything"
+      ],
+      "notes": [
+        "需要本机运行 Everything；索引搜索和内容预览分别请求授权。",
+        "可在顶部搜索，支持分类、日期筛选、排序和预览。"
+      ],
+      "reference": {
+        "package": "utools-searchmaster",
+        "label": "uTools 文件搜索（Everything）",
+        "url": "https://www.u-tools.cn/plugins/detail/搜索大师/"
+      }
+    }
+  ]
+}

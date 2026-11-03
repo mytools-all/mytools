@@ -97,6 +97,7 @@ pub fn run() {
             commands::plugin::plugin_reset_root,
             commands::plugin::plugin_open_root,
             commands::plugin_npm::plugin_install_npm,
+            commands::catalog::plugin_catalog_fetch,
             commands::plugin_window::plugin_open_window,
             commands::plugin_window::plugin_close_window,
             commands::plugin_window::plugin_list_windows,

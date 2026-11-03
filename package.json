@@ -27,7 +27,8 @@
     "test:coverage": "vitest run --coverage",
     "test:coverage:backend": "cd src-tauri && cargo llvm-cov --workspace --text --summary-only --fail-under-lines 50",
     "test:e2e": "wdio run e2e/wdio.conf.ts",
-    "test:e2e:driver": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/e2e-driver.ps1"
+    "test:e2e:driver": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/e2e-driver.ps1",
+    "catalog:sync": "node scripts/sync-catalog-snapshot.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

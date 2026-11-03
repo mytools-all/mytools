@@ -124,12 +124,16 @@ export const usePluginsStore = defineStore("plugins", () => {
   }
 
   async function uninstall(code: string) {
-    if (!tauriAvailable()) return;
+    if (!tauriAvailable()) return false;
+    error.value = null;
     try {
       await invoke("plugin_uninstall", { code });
+      plugins.value = plugins.value.filter(plugin => plugin.manifest.name !== code);
       await refresh();
+      return true;
     } catch (e) {
       error.value = String(e);
+      return false;
     }
   }
 

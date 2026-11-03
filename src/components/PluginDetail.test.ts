@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
@@ -18,6 +18,7 @@ async function setup(name:string, plugin?:LoadedPlugin) {
 }
 
 describe("plugin details",()=>{
+  beforeEach(()=>{ localStorage.clear(); });
   it("explains independent distribution and shows capabilities",async()=>{
     const {wrapper}=await setup("mytools-search");
     expect(wrapper.text()).toContain("通过 npm 安装独立插件包");
@@ -34,6 +35,32 @@ describe("plugin details",()=>{
     expect(wrapper.text()).toContain("fixture");
     await wrapper.find(".pd__back").trigger("click");await flushPromises();
     expect(router.currentRoute.value.query).toEqual({section:"installed"});
+    wrapper.unmount();
+  });
+  it("requires confirmation and returns an uninstalled catalog plugin to its install action",async()=>{
+    const plugin={manifest:{name:"mytools-search",version:"0.1.0",description:"search",features:[{code:"run",explain:"运行",cmds:["search"]}]},enabled:true,origin:"custom"} as LoadedPlugin;
+    const {wrapper}=await setup("mytools-search",plugin);
+    const plugins=usePluginsStore();
+    const uninstall=vi.spyOn(plugins,"uninstall").mockImplementation(async()=>{plugins.plugins=[];return true;});
+    await wrapper.find(".pd__actions .pd__uninstall").trigger("click");
+    expect(uninstall).not.toHaveBeenCalled();
+    await wrapper.find(".pd__confirm .pd__uninstall").trigger("click");
+    await flushPromises();
+    expect(uninstall).toHaveBeenCalledWith("mytools-search");
+    expect(wrapper.find(".pd__primary").text()).toBe("安装");
+    expect(wrapper.text()).toContain("数据仍保留");
+    wrapper.unmount();
+  });
+  it("keeps the installed plugin and shows uninstall errors",async()=>{
+    const plugin: LoadedPlugin={manifest:{name:"mytools-search",description:"search",main:"index.html",version:"0.1.0",features:[{code:"run",explain:"运行",cmds:[]}]},enabled:true,origin:"custom",declaredCapabilities:[],dir:"fixture",mainUrl:"https://example.com/index.html"};
+    const {wrapper}=await setup("mytools-search",plugin);
+    const plugins=usePluginsStore();
+    vi.spyOn(plugins,"uninstall").mockImplementation(async()=>{plugins.error="file locked";return false;});
+    await wrapper.find(".pd__actions .pd__uninstall").trigger("click");
+    await wrapper.find(".pd__confirm .pd__uninstall").trigger("click");
+    await flushPromises();
+    expect(wrapper.text()).toContain("file locked");
+    expect(wrapper.find(".pd__primary").text()).toBe("打开");
     wrapper.unmount();
   });
 });

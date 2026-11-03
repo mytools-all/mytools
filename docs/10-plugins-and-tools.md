@@ -20,4 +20,10 @@ plugin.json.name 是稳定运行时身份，例如 mytools-search；package.json
 
 ## 索引
 
-mytools-home 的 plugins/database.json 使用 schemaVersion: 1 和 plugins 数组，每项包含 name、npm、version、repository 和 published。仅 published 为 true 的条目可视为已经发布；未发布的条目用于跟踪准备中的插件。当前宿主商店读取 src/data/toolCatalog.ts 中的目录快照，安装包从 npm 下载；未来可在保留离线回退和字段验证的前提下读取 GitHub JSON。
+mytools-home 的 plugins/database.json 是商店分类和基本信息的唯一维护入口。schemaVersion 为 2，每项包含 name、npm、version、published、title、description、category、author、license、repository、features、keywords、notes、capabilities；可选 icon、homepage、reference、replaces。
+
+插件商店进入时异步抓取索引，支持手动刷新。身份与 npm 名称必须合法、版本必须明确，重复身份或不合法链接会拒绝整次更新；失败保留上次有效缓存或离线快照。分类直接从索引派生。离线快照通过 pnpm catalog:sync 自动同步，不单独维护分类、介绍或使用说明。
+
+商店直接安装 npm 包到统一插件根目录，不弹目录选择框。本地目录和压缩包导入仅保留在开发者页面。已安装详情提供打开、启停、打开目录及确认卸载；卸载插件程序不删除独立插件存储。
+
+索引 capabilities 仅供展示，不授予权限。已安装插件的实际能力和版本以本地清单为准，调用继续通过宿主会话和权限校验。demo-hello 已更名为 mytools-demo；旧 npm 包提供迁移提示，旧安装可以卸载后从新条目安装。
