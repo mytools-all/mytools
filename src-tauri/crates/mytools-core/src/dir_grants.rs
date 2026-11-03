@@ -110,16 +110,34 @@ impl DirGrantStore {
     /// and length-checked at the separator, so `C:\a\b` does not match
     /// the grant `C:\a\bc`.
     pub fn is_granted(&self, plugin: &str, target: &Path) -> bool {
-        let target_raw = target.to_string_lossy().into_owned();
-        let target_canonical = target
-            .canonicalize()
-            .map(|p| strip_verbatim(&p.to_string_lossy()))
-            .unwrap_or_else(|_| strip_verbatim(&target_raw));
+        let Some(target) = canonical_target(target) else {
+            return false;
+        };
+        let target_canonical = strip_verbatim(&target.to_string_lossy());
         let grants = self.inner.read().expect("dir grants read");
         grants.iter().any(|g| {
-            g.plugin == plugin
-                && (covers(&g.path, &target_canonical) || covers(&g.path, &target_raw))
+            g.plugin == plugin && covers(&g.path, &target_canonical)
         })
+    }
+}
+
+fn canonical_target(target: &Path) -> Option<PathBuf> {
+    let mut ancestor = target;
+    let mut missing = Vec::new();
+    loop {
+        match ancestor.canonicalize() {
+            Ok(mut path) => {
+                for name in missing.iter().rev() {
+                    path.push(name);
+                }
+                return Some(path);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                missing.push(ancestor.file_name()?.to_os_string());
+                ancestor = ancestor.parent()?;
+            }
+            Err(_) => return None,
+        }
     }
 }
 /// Windows canonical paths carry a `\\?\` verbatim prefix; drop it so
@@ -210,6 +228,39 @@ mod tests {
         reloaded.grant("demo", &root).unwrap();
         assert_eq!(reloaded.list().len(), 1);
         assert!(!reloaded.list()[0].path.is_empty());
+    }
+
+    #[test]
+    fn missing_targets_resolve_through_the_existing_parent() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().join("workspace");
+        fs::create_dir_all(&root).unwrap();
+        let target = root.join("missing").join("new.txt");
+        assert_eq!(
+            canonical_target(&target),
+            Some(root.canonicalize().unwrap().join("missing").join("new.txt"))
+        );
+        let grants = store(&dir);
+        grants.grant("demo", &root).unwrap();
+        assert!(grants.is_granted("demo", &target));
+        assert!(!grants.is_granted("demo", &root.join("..").join("outside.txt")));
+        assert!(!grants.is_granted("demo", &root.join("missing/../../outside.txt")));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn symlink_targets_cannot_escape_the_granted_directory() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().join("workspace");
+        let outside = dir.path().join("outside");
+        fs::create_dir_all(&root).unwrap();
+        fs::create_dir_all(&outside).unwrap();
+        fs::write(outside.join("existing.txt"), "fixture").unwrap();
+        std::os::unix::fs::symlink(&outside, root.join("link")).unwrap();
+        let grants = store(&dir);
+        grants.grant("demo", &root).unwrap();
+        assert!(!grants.is_granted("demo", &root.join("link/existing.txt")));
+        assert!(!grants.is_granted("demo", &root.join("link/missing.txt")));
     }
 
     #[test]
