@@ -467,7 +467,7 @@ onBeforeUnmount(() => {
             <p class="pc__dev-text">
               插件是一个 HTML 应用目录（可选 plugin.json / package.json
               manifest）。把构建产物放到插件根目录的子目录（如
-              <code>demo-hello</code>），点击「重新扫描」即可在「已安装」中看到。
+              <code>mytools-demo</code>），点击「重新扫描」即可在「已安装」中看到。
               插件通过 <code>window.mytools.call(能力, 参数)</code> 调用宿主能力，
               更多协议见 <code>docs/04-plugin-spec.md</code>。
             </p>
