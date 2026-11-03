@@ -4,7 +4,7 @@
     {
       "name": "mytools-demo",
       "npm": "@mytools-all/mytools-demo",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-demo",
       "published": false,
       "title": "MyTools Demo",
@@ -29,14 +29,18 @@
         "mytools-demo",
         "demo",
         "示例插件",
-        "demo-hello"
+        "demo-hello",
+        "mytools-hello",
+        "hello",
+        "官方示例"
       ],
       "notes": [
-        "合并源码已完成，可通过 GitHub 源码目录安装；npm 重新发布尚未完成。"
+        "五项演示已合并为 0.1.1，npm 重新发布仍在等待撤包冷却期；目前可以安装 GitHub 源码目录。"
       ],
       "icon": "https://raw.githubusercontent.com/mytools-all/mytools-demo/main/icon.svg",
       "replaces": [
-        "demo-hello"
+        "demo-hello",
+        "mytools-hello"
       ]
     },
     {
