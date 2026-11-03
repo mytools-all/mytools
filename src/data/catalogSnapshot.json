@@ -6,20 +6,24 @@
       "npm": "@mytools-all/mytools-demo",
       "version": "0.1.0",
       "repository": "https://github.com/mytools-all/mytools-demo",
-      "published": true,
+      "published": false,
       "title": "MyTools Demo",
-      "description": "测试插件：演示 MyTools 桥接（复制文本 / 打开链接 / 读取系统路径）",
+      "description": "MyTools 统一示例：复制和读取剪贴板、打开链接、读取系统路径、列出应用。",
       "category": "开发",
       "author": "MyTools",
       "license": "MIT",
       "homepage": "https://github.com/mytools-all/mytools-demo#readme",
       "capabilities": [
         "clipboard.write",
+        "clipboard.read",
         "shell.open",
-        "system.path"
+        "system.path",
+        "app.list"
       ],
       "features": [
-        "演示 MyTools bridge"
+        "复制和读取剪贴板",
+        "打开链接与读取主目录",
+        "列出已索引应用"
       ],
       "keywords": [
         "mytools-demo",
@@ -28,8 +32,7 @@
         "demo-hello"
       ],
       "notes": [
-        "安装后点击“打开”进入插件，也可从主页搜索启动。",
-        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
+        "合并源码已完成，可通过 GitHub 源码目录安装；npm 重新发布尚未完成。"
       ],
       "icon": "https://raw.githubusercontent.com/mytools-all/mytools-demo/main/icon.svg",
       "replaces": [
