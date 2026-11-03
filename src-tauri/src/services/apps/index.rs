@@ -1166,6 +1166,7 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
+    #[ignore = "requires a Windows client desktop with Notepad and Calculator installed"]
     fn real_index_contains_windows_builtin_apps() {
         // Notepad / Calculator ship no .lnk and register nothing in Uninstall;
         // only the AppsFolder sweep can surface them.
@@ -1186,6 +1187,7 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
+    #[ignore = "requires Visual Studio Code installed in the local Start Menu"]
     fn real_index_contains_start_menu_apps() {
         let idx = get_or_scan();
         assert!(idx

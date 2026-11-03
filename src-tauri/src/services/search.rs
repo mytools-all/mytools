@@ -23,6 +23,17 @@ pub fn run_with_plugins(
     plugins: &[PluginManifest],
     icons: &HashMap<String, Option<String>>,
 ) -> Vec<SearchResult> {
+    run_with_app_search(query, plugins, icons, |query| {
+        search_apps(query, &crate::services::apps::index::apps().apps)
+    })
+}
+
+fn run_with_app_search(
+    query: &str,
+    plugins: &[PluginManifest],
+    icons: &HashMap<String, Option<String>>,
+    app_search: impl FnOnce(&str) -> Vec<SearchResult>,
+) -> Vec<SearchResult> {
     let q = query.trim();
     if q.is_empty() {
         return Vec::new();
@@ -67,29 +78,7 @@ pub fn run_with_plugins(
         });
     }
 
-    // Start Menu `.lnk` alone cannot see Notepad, Calculator or Paint — those
-    // ship no shortcut and register nothing in Uninstall, so they live in the
-    // shell's app index (Start Menu + desktop + Uninstall registry +
-    // `shell:AppsFolder`). Settings is indexed the same way: the UWP app is
-    // in `shell:AppsFolder`, while its individual pages (`ms-settings:*`)
-    // cannot be enumerated and are intentionally not indexed.
-    let apps = &crate::services::apps::index::apps().apps;
-    let app_candidates: Vec<(String, String)> = apps
-        .iter()
-        .map(|e| (e.name.clone(), e.name.clone()))
-        .collect();
-    for hit in fuzzy_match(q, &app_candidates) {
-        if let Some(app) = apps.iter().find(|e| e.name == hit.title) {
-            results.push(SearchResult {
-                kind: "app",
-                id: app.target.clone(),
-                title: app.name.clone(),
-                subtitle: app.source.label().to_string(),
-                score: hit.score - 1 - i64::from(app.source.rank()),
-                icon: None,
-            });
-        }
-    }
+    results.extend(app_search(q));
 
     let plugin_candidates: Vec<(String, String)> = plugins
         .iter()
@@ -119,6 +108,31 @@ pub fn run_with_plugins(
     }
 
     results.sort_by_key(|b| std::cmp::Reverse(b.score));
+    results
+}
+
+fn search_apps(
+    query: &str,
+    apps: &[crate::services::apps::index::IndexedApp],
+) -> Vec<SearchResult> {
+    let app_candidates: Vec<(String, String)> = apps
+        .iter()
+        .map(|e| (e.name.clone(), e.name.clone()))
+        .collect();
+    let mut results = Vec::new();
+    for hit in fuzzy_match(query, &app_candidates) {
+        if let Some(app) = apps.iter().find(|e| e.name == hit.title) {
+            results.push(SearchResult {
+                kind: "app",
+                id: app.target.clone(),
+                title: app.name.clone(),
+                subtitle: app.source.label().to_string(),
+                score: hit.score - 1 - i64::from(app.source.rank()),
+                icon: None,
+            });
+        }
+    }
+
     results
 }
 
@@ -170,6 +184,78 @@ pub async fn search(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::services::apps::index::{AppSource, IndexedApp, TargetKind};
+
+    fn fixture_apps() -> Vec<IndexedApp> {
+        [
+            (
+                "记事本",
+                "Fixture.Notepad_123!App",
+                TargetKind::ShellItem,
+                AppSource::AppsFolder,
+            ),
+            (
+                "计算器",
+                "Fixture.Calculator_123!App",
+                TargetKind::ShellItem,
+                AppSource::AppsFolder,
+            ),
+            (
+                "画图",
+                "Fixture.Paint_123!App",
+                TargetKind::ShellItem,
+                AppSource::AppsFolder,
+            ),
+            (
+                "设置",
+                "Fixture.Settings_123!App",
+                TargetKind::ShellItem,
+                AppSource::AppsFolder,
+            ),
+            (
+                "Visual Studio Code",
+                "C:/fixture/Visual Studio Code.lnk",
+                TargetKind::FilePath,
+                AppSource::StartMenu,
+            ),
+            (
+                "Bandizip",
+                "C:/fixture/Bandizip.exe",
+                TargetKind::FilePath,
+                AppSource::Registry,
+            ),
+        ]
+        .into_iter()
+        .map(|(name, target, kind, source)| IndexedApp {
+            name: name.into(),
+            target: target.into(),
+            kind,
+            source,
+        })
+        .collect()
+    }
+
+    fn run_with_plugins(
+        query: &str,
+        plugins: &[PluginManifest],
+        icons: &HashMap<String, Option<String>>,
+    ) -> Vec<SearchResult> {
+        run_with_app_search(query, plugins, icons, |query| {
+            search_apps(query, &fixture_apps())
+        })
+    }
+
+    #[test]
+    fn empty_and_calculator_queries_do_not_load_apps() {
+        assert!(
+            run_with_app_search(" ", &[], &HashMap::new(), |_| panic!("unexpected app scan"))
+                .is_empty()
+        );
+        let results = run_with_app_search("=1+2", &[], &HashMap::new(), |_| {
+            panic!("unexpected app scan")
+        });
+        assert_eq!(results[0].title, "3");
+    }
 
     /// 记事本 / 计算器 这类应用没有 `.lnk`、也不注册到 Uninstall，
     /// 只有 `shell:AppsFolder` 能发现它们。这是整个应用索引存在的理由。
@@ -331,12 +417,11 @@ mod tests {
             .find(|r| r.kind == "app" && r.title == "设置")
             .unwrap_or_else(|| panic!("searching 设置 must surface the Settings app: {results:?}"));
         assert_eq!(hit.subtitle, "app (system)");
-        let indexed = crate::services::apps::index::apps()
-            .apps
+        let indexed = fixture_apps()
             .iter()
             .find(|a| a.name == "设置")
             .map(|a| a.target.clone())
-            .expect("the Settings app should come from shell:AppsFolder");
+            .expect("the Settings fixture should be indexed");
         assert_eq!(hit.id, indexed);
     }
 }

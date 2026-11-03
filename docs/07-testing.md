@@ -145,3 +145,11 @@ node scripts/cdp-eval.mjs 'window.__cdp = window.mytools.getEnv()' --frame mytoo
 
 脚本测试：`pnpm test:debug`。调试命令在普通权限终端执行；宿主提升权限时，WebView2 可能忽略环境变量覆盖。
 Windows 排除端口与占用端口都可能造成固定端口不可绑定，应优先采用自动分配，而非修改整机端口排除规则。
+
+## 桌面应用索引验收
+
+自动搜索测试使用固定索引，覆盖应用来源、稳定目标、搜索排序及空查询不扫描应用。真实桌面检查不假设 Windows Server CI 安装了商店应用或 VS Code。请在具备这些应用的 Windows 客户端执行：
+
+    cd src-tauri
+    cargo test -p mytools real_index_contains -- --ignored
+
