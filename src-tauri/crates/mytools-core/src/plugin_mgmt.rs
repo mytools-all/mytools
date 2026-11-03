@@ -9,7 +9,8 @@ use crate::manifest::{PluginManifest, PKG_MANIFEST_FILE};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+
+pub(crate) const INSTALL_STAGING_PREFIX: &str = ".mytools-install-";
 
 /// Name of the JSON file that stores the disabled-plugin set under
 /// the app data directory.
@@ -373,8 +374,8 @@ pub fn install_from_zip(zip_path: &Path, root: &Path) -> Result<String, PluginMg
         .map(Path::to_path_buf)
         .unwrap_or_default();
 
-    let staging = staging_dir();
-    fs::create_dir_all(&staging)?;
+    let staging_guard = staging_dir(root)?;
+    let staging = staging_guard.path().to_path_buf();
     let result = (|| -> Result<String, PluginMgrError> {
         let mut guard_manifest_found = false;
         for i in 0..archive.len() {
@@ -426,8 +427,8 @@ pub fn install_from_tar_gz(tar_path: &Path, root: &Path) -> Result<String, Plugi
     let decoder = flate2::read::GzDecoder::new(file);
     let mut archive = tar::Archive::new(decoder);
 
-    let staging = staging_dir();
-    fs::create_dir_all(&staging)?;
+    let staging_guard = staging_dir(root)?;
+    let staging = staging_guard.path().to_path_buf();
     let result = (|| -> Result<String, PluginMgrError> {
         let mut count = 0usize;
         for mut entry in archive.entries()?.filter_map(Result::ok) {
@@ -467,11 +468,11 @@ pub fn install_from_tar_gz(tar_path: &Path, root: &Path) -> Result<String, Plugi
     result
 }
 
-static STAGING_SEQ: AtomicU64 = AtomicU64::new(0);
-
-fn staging_dir() -> PathBuf {
-    let seq = STAGING_SEQ.fetch_add(1, Ordering::Relaxed);
-    std::env::temp_dir().join(format!("mytools-install-{}-{}", std::process::id(), seq))
+fn staging_dir(root: &Path) -> Result<tempfile::TempDir, PluginMgrError> {
+    fs::create_dir_all(root)?;
+    Ok(tempfile::Builder::new()
+        .prefix(INSTALL_STAGING_PREFIX)
+        .tempdir_in(root)?)
 }
 
 fn guard_entry_path(name: &str) -> Result<(), PluginMgrError> {
@@ -493,6 +494,18 @@ fn copy_entry_to_file(from: &mut impl std::io::Read, to: &Path) -> Result<(), Pl
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn staging_is_inside_the_target_root_and_cleans_up() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let root = dir.path().join("plugins");
+        let path = {
+            let staging = staging_dir(&root).unwrap();
+            assert_eq!(staging.path().parent(), Some(root.as_path()));
+            staging.path().to_path_buf()
+        };
+        assert!(!path.exists());
+    }
 
     #[test]
     fn safe_names_accepted_and_rejected() {

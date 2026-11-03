@@ -92,7 +92,17 @@ pub fn scan_dir_enabled(
         return Ok(Vec::new());
     }
     let mut out = Vec::new();
-    for entry in WalkDir::new(root).max_depth(3).into_iter() {
+    for entry in WalkDir::new(root)
+        .max_depth(3)
+        .into_iter()
+        .filter_entry(|entry| {
+            entry.depth() == 0
+                || !entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with(crate::plugin_mgmt::INSTALL_STAGING_PREFIX)
+        })
+    {
         let entry = entry?;
         if !entry.file_type().is_file() {
             continue;
@@ -337,6 +347,24 @@ mod tests {
         let ghost = dir.path().join("does-not-exist");
         let plugins = scan_dir(&ghost).unwrap();
         assert!(plugins.is_empty());
+    }
+
+    #[test]
+    fn scan_ignores_uncommitted_archive_staging() {
+        let root = TempDir::new().unwrap();
+        for name in ["ready", ".mytools-install-pending"] {
+            let dir = root.path().join(name);
+            fs::create_dir_all(&dir).unwrap();
+            fs::write(
+                dir.join("plugin.json"),
+                format!(r#"{{"name":"{name}","version":"0.1.0","main":"index.html"}}"#),
+            )
+            .unwrap();
+            fs::write(dir.join("index.html"), "<html></html>").unwrap();
+        }
+        let plugins = scan_dir(root.path()).unwrap();
+        assert_eq!(plugins.len(), 1);
+        assert_eq!(plugins[0].manifest.name, "ready");
     }
 
     #[test]
