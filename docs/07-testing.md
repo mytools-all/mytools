@@ -135,7 +135,7 @@ Get-Process tauri-driver,msedgedriver -ErrorAction SilentlyContinue | Stop-Proce
 pnpm dev:install:debug
 
 node scripts/cdp-eval.mjs 'window.__cdp = document.title'
-node scripts/cdp-eval.mjs 'window.__cdp = window.mytools.getEnv()' --frame mytools-hello
+node scripts/cdp-eval.mjs 'window.__cdp = window.mytools.getEnv()' --frame mytools-demo
 ```
 
 已有构建产物时用 `pnpm dev:debug` 直接启动仓库 release EXE；也可执行 `pwsh -NoProfile -File scripts/start-cdp.ps1 -ExePath <exe路径>`。

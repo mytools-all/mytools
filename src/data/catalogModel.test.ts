@@ -5,7 +5,7 @@ import { parseToolCatalog } from "./catalogModel";
 describe("catalog index validation", () => {
   it("maps index metadata to immutable-version npm installs", () => {
     const entries = parseToolCatalog(snapshot);
-    expect(entries).toHaveLength(13);
+    expect(entries).toHaveLength(12);
     const demo = entries.find(entry => entry.name === "mytools-demo")!;
     expect(demo.keywords).toContain("mytools-demo");
     expect(demo.replaces).toContain("demo-hello");

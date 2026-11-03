@@ -100,7 +100,7 @@
 - [x] `clipboard.read` / `clipboard.history` / `clipboard.remove`、`app.list`、`app.launch`
 - [x] `net.fetch`（HTTP(S)，Exec 权限）、`system.notify`（Write）、`fs.read` / `fs.write`
 - [x] `app.launch` 复用启动器目标解析（AUMID / 文件 / URI）
-- [x] 官方插件包编译进二进制 + 启动播种 + `official` provenance（`mytools-hello`、`mytools-json`）
+- [x] 插件独立分发；官方来源标记由宿主维护，不信任插件自声明
 - [x] 插件 iframe 内的 `window.mytools.call()` 直连能力注册表（按插件 scope 授权）
 - [x] 插件中心安装列表新增「打开」入口
 - [ ] 其余工具以**独立第三方插件包**交付（见 M7）

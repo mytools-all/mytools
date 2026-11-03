@@ -228,34 +228,6 @@
       }
     },
     {
-      "name": "mytools-hello",
-      "npm": "@mytools-all/mytools-hello",
-      "version": "0.1.0",
-      "repository": "https://github.com/mytools-all/mytools-hello",
-      "published": true,
-      "title": "MyTools 能力示例",
-      "description": "MyTools 示例插件：读取剪贴板与应用列表，演示宿主能力调用。",
-      "category": "开发",
-      "author": "MyTools Contributors",
-      "license": "MIT",
-      "homepage": "https://github.com/mytools-all/mytools-hello#readme",
-      "capabilities": [
-        "clipboard.read",
-        "app.list"
-      ],
-      "features": [
-        "打开官方示例"
-      ],
-      "keywords": [
-        "官方示例",
-        "hello"
-      ],
-      "notes": [
-        "安装后点击“打开”进入插件，也可从主页搜索启动。",
-        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
-      ]
-    },
-    {
       "name": "mytools-ipconfig",
       "npm": "@mytools-all/mytools-ipconfig",
       "version": "0.1.0",
