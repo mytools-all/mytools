@@ -82,6 +82,17 @@ pub(super) fn register<R: Runtime>(
         }),
     ))?;
     registry.register(Capability::new(
+        "fs.searchicons",
+        Permission::Read,
+        "Read Windows Shell icons for current search results",
+        Box::new(|call| {
+            let paths: Vec<String> = serde_json::from_value(call.args.get("paths").cloned().unwrap_or(Value::Null))
+                .map_err(|_| CapabilityError::invalid_args("expected { paths: string[] }"))?;
+            crate::services::file_search::icons(call.ctx.scope(), &paths)
+                .map_err(|e| CapabilityError::handler_failed("fs.searchicons", e))
+        }),
+    ))?;
+    registry.register(Capability::new(
         "fs.searchpreview",
         Permission::Exec,
         "Preview a file from the current search results",

@@ -4,6 +4,28 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
 static RESULTS: OnceLock<Mutex<HashMap<String, HashSet<PathBuf>>>> = OnceLock::new();
+
+pub fn icons(scope: &str, paths: &[String]) -> Result<Value, String> {
+    if paths.len() > 16 {
+        return Err("每次最多读取16个搜索结果图标".into());
+    }
+    let allowed = RESULTS
+        .get_or_init(Default::default)
+        .lock()
+        .map_err(|_| "搜索会话不可用")?
+        .get(scope)
+        .is_some_and(|results| {
+            paths
+                .iter()
+                .all(|path| results.contains(&PathBuf::from(path)))
+        });
+    if !allowed {
+        return Err("只能读取当前搜索结果中的图标，请重新搜索".into());
+    }
+    Ok(Value::Array(paths.iter().map(|path| {
+        json!({"path":path,"icon":crate::infrastructure::app_icons::resolve_icon(path)})
+    }).collect()))
+}
 pub fn search(scope: &str, options: Query) -> Result<Value, String> {
     let result = everything::query(options)?;
     let paths = result
@@ -66,7 +88,9 @@ pub fn preview(scope: &str, path: &str) -> Result<Value, String> {
         _ => None,
     };
     if let Some((kind, mime)) = media {
-        if metadata.len() > 8 * 1024 * 1024 { return Err("文件大于 8 MB，请使用默认程序打开".into()); }
+        if metadata.len() > 8 * 1024 * 1024 {
+            return Err("文件大于 8 MB，请使用默认程序打开".into());
+        }
         let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
         return Ok(json!({"kind":kind,"bytes":bytes,"mime":mime}));
     }
@@ -83,4 +107,35 @@ pub fn preview(scope: &str, path: &str) -> Result<Value, String> {
     Ok(
         json!({"kind":"text","text":String::from_utf8_lossy(&bytes),"truncated":metadata.len()>20000}),
     )
+}
+
+#[cfg(test)]
+mod icon_tests {
+    use super::*;
+
+    #[test]
+    fn icon_requests_require_current_results_and_bounded_batches() {
+        assert!(icons("missing-icon-scope", &["unlisted".into()]).is_err());
+        assert!(icons("missing-icon-scope", &vec!["unlisted".into(); 17]).is_err());
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().to_string_lossy().into_owned();
+        let scope = "icon-test-current-results";
+        RESULTS
+            .get_or_init(Default::default)
+            .lock()
+            .unwrap()
+            .insert(scope.into(), HashSet::from([PathBuf::from(&path)]));
+        let response = icons(scope, std::slice::from_ref(&path)).unwrap();
+        assert_eq!(response.as_array().unwrap().len(), 1);
+        assert_eq!(response[0]["path"], path);
+        assert!(icons(scope, &[path.clone(), "unlisted".into()]).is_err());
+        RESULTS
+            .get()
+            .unwrap()
+            .lock()
+            .unwrap()
+            .insert(scope.into(), HashSet::new());
+        assert!(icons(scope, &[path]).is_err());
+        RESULTS.get().unwrap().lock().unwrap().remove(scope);
+    }
 }

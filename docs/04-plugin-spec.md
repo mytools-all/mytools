@@ -133,6 +133,7 @@ my-plugin/
 | `fs.searchstatus` | — | `{ running, instances }` | read | 检测本机 Everything 实例 |
 | `fs.globalsearch` | `{ query, offset?, limit?, sort?, instance? }` | `{ entries, total, offset }` | exec | 查询 Everything 索引；不读取文件内容 |
 | `fs.searchpreview` | `{ path }` | `{ kind, text?, bytes?, mime?, truncated? }` | exec | 仅当前搜索结果文件；文本前 20KB、图片不超过 4MB |
+| `fs.searchicons` | `{ paths }` | `[{ path, icon }]` | read | 每批最多 16 个当前搜索结果，返回文件、目录或快捷方式目标的 Windows 图标；失败为 null |
 | `fs.pickfiles` | `{ directories? }` | `{ entries }` | write | 系统选择文件 / 文件夹；明确授权所在目录 |
 | `fs.importdropped` | — | `{ entries }` | write | 当前窗口最近一次系统拖放，60 秒有效、仅一次；授予所在目录，不接受插件提交路径 |
 | `system.networkdetails` | — | 完整报告文本 | read | 本机 Windows ipconfig /all；系统 OEM 编码解码 |
