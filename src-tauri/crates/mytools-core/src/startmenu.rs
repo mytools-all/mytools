@@ -132,8 +132,11 @@ fn scan_dir(dir: &Path, source: StartMenuSource, out: &mut Vec<StartMenuEntry>) 
 mod tests {
     use super::*;
 
+    static SCAN_TEST_LOCK: Mutex<()> = Mutex::new(());
+
     #[test]
     fn scan_returns_empty_for_missing_dirs() {
+        let _guard = SCAN_TEST_LOCK.lock().unwrap();
         // On non-Windows or with cleared APPDATA, the scanner must
         // simply return an empty Vec rather than panic.
         let entries = scan();
@@ -144,6 +147,7 @@ mod tests {
 
     #[test]
     fn scan_result_is_cached_until_cleared() {
+        let _guard = SCAN_TEST_LOCK.lock().unwrap();
         // Generation only advances on real disk walks, so deltas prove
         // whether the cache short-circuited the rescan.
         clear_scan_cache();
