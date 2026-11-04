@@ -86,11 +86,13 @@ fn net_fetch(call: &CapabilityCall) -> Result<Value, CapabilityError> {
         })
         .collect();
     let mut body = String::new();
-    response
-        .into_reader()
-        .take(MAX_BODY_BYTES)
-        .read_to_string(&mut body)
-        .map_err(|e| CapabilityError::handler_failed("net.fetch", e.to_string()))?;
+    if method != "HEAD" {
+        response
+            .into_reader()
+            .take(MAX_BODY_BYTES)
+            .read_to_string(&mut body)
+            .map_err(|e| CapabilityError::handler_failed("net.fetch", e.to_string()))?;
+    }
     Ok(serde_json::json!({
         "status": status,
         "body": body,
@@ -130,6 +132,29 @@ mod tests {
         assert_eq!(value["status"], 200);
         assert_eq!(value["body"], "ok");
         assert!(value["headers"].to_string().contains("text/plain"));
+        server.join().unwrap();
+    }
+
+    #[test]
+    fn head_does_not_read_the_advertised_response_body() {
+        use std::io::Write;
+        use std::net::TcpListener;
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut buf = [0u8; 1024];
+            let _ = stream.read(&mut buf);
+            stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Length: 100\r\nConnection: close\r\n\r\n").unwrap();
+        });
+        let call = CapabilityCall {
+            id: "net.fetch".into(),
+            args: json!({"url":format!("http://{addr}/"), "method":"HEAD"}),
+            ctx: CallContext::new(Origin::Official),
+        };
+        let value = net_fetch(&call).unwrap();
+        assert_eq!(value["status"], 200);
+        assert_eq!(value["body"], "");
         server.join().unwrap();
     }
 

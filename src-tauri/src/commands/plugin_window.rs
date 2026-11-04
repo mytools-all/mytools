@@ -27,6 +27,30 @@ const POSITION_OFFSET_PX: i32 = 30;
 
 static NEXT_LABEL_SEQ: AtomicU32 = AtomicU32::new(1);
 
+#[tauri::command]
+pub async fn plugin_center_open_window(app: tauri::AppHandle, section: String) -> Result<String, String> {
+    if !matches!(section.as_str(), "store" | "installed" | "dev" | "settings") {
+        return Err("invalid plugin center section".into());
+    }
+    let label = "center";
+    if let Some(window) = app.get_webview_window(label) {
+        crate::infrastructure::app_identity::apply(&window)?;
+        window.eval(format!("location.hash='#/plugins?section={section}'")).map_err(|e| e.to_string())?;
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().map_err(|e| e.to_string())?;
+    } else {
+        let window = WebviewWindowBuilder::new(&app, label, WebviewUrl::App(format!("index.html#/plugins?section={section}").into()))
+            .icon(crate::infrastructure::app_identity::icon()?).map_err(|error| error.to_string())?
+            .title("MyTools · 插件中心").inner_size(1024.0, 760.0)
+            .min_inner_size(720.0, 480.0).decorations(true).resizable(true)
+            .visible(false).disable_drag_drop_handler().build().map_err(|e| e.to_string())?;
+        crate::infrastructure::app_identity::apply(&window)?;
+        window.show().map_err(|error| error.to_string())?;
+        window.set_focus().map_err(|error| error.to_string())?;
+    }
+    Ok(label.into())
+}
+
 #[derive(Serialize, Clone, Debug)]
 pub struct PluginWindowInfo {
     pub label: String,
@@ -103,6 +127,8 @@ pub fn detached_app_url(plugin_id: &str, feature: &str) -> String {
 
 #[tauri::command]
 pub async fn plugin_open_window(
+    window: tauri::Window,
+    from_panel: Option<bool>,
     plugin_id: String,
     feature: String,
     registry: tauri::State<'_, SharedPluginRegistry>,
@@ -110,13 +136,14 @@ pub async fn plugin_open_window(
 ) -> Result<String, String> {
     let existing_label = plugin_label(&plugin_id, &feature);
     if let Some(existing) = app.get_webview_window(&existing_label) {
+        crate::infrastructure::app_identity::apply(&existing)?;
         existing.show().map_err(|e| e.to_string())?;
         existing.set_focus().map_err(|e| e.to_string())?;
         return Ok(existing_label);
     }
 
     let label = next_label(&plugin_id);
-    let app_url = detached_app_url(&plugin_id, &feature);
+    let mut app_url = detached_app_url(&plugin_id, &feature);
     let manifest = {
         registry
             .list()
@@ -129,6 +156,11 @@ pub async fn plugin_open_window(
         .plugin_name
         .clone()
         .unwrap_or(manifest.name.clone());
+    if from_panel.unwrap_or(false) {
+        if window.label() != "panel" { return Err("only the panel can transfer launch context".into()); }
+        app.state::<crate::runtime::LaunchContexts>().bind(&label, &plugin_id)?;
+        app_url.push_str("?context=panel");
+    }
 
     let rect = if let Some(window) = app.get_webview_window("main") {
         if let Some(monitor) = window.current_monitor().map_err(|e| e.to_string())? {
@@ -166,6 +198,7 @@ pub async fn plugin_open_window(
     );
 
     let window = WebviewWindowBuilder::new(&app, &label, WebviewUrl::App(PathBuf::from(app_url)))
+        .icon(crate::infrastructure::app_identity::icon()?).map_err(|error| error.to_string())?
         .title(&title)
         .inner_size(rect.width as f64, rect.height as f64)
         .min_inner_size(MIN_WIDTH as f64, MIN_HEIGHT as f64)
@@ -174,10 +207,13 @@ pub async fn plugin_open_window(
         .decorations(true)
         .always_on_top(false)
         .skip_taskbar(false)
-        .visible(true)
-        .focused(true)
+        .visible(false)
+        .focused(false)
         .build()
         .map_err(|e| format!("failed to build webview window: {e}"))?;
+    crate::infrastructure::app_identity::apply(&window)?;
+    window.show().map_err(|error| error.to_string())?;
+    window.set_focus().map_err(|error| error.to_string())?;
 
     let app_handle = app.clone();
     let label_for_event = label.clone();

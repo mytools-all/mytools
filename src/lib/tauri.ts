@@ -1,5 +1,9 @@
 type InternalsWindow = { __TAURI_INTERNALS__?: unknown };
 
+export function isDetachedCenter(): boolean {
+  return (window as unknown as {__TAURI_INTERNALS__?: {metadata?: {currentWindow?: {label?: string}}}}).__TAURI_INTERNALS__?.metadata?.currentWindow?.label === "center";
+}
+
 export function tauriAvailable(): boolean {
   return Boolean((window as unknown as InternalsWindow).__TAURI_INTERNALS__);
 }

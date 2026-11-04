@@ -1,4 +1,4 @@
-import { mount } from "@vue/test-utils";
+import { mount, flushPromises } from "@vue/test-utils";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import FloatballView from "@/views/FloatballView.vue";
 
@@ -34,6 +34,7 @@ vi.mock("@tauri-apps/api/webviewWindow", () => ({
 
 describe("FloatballView", () => {
   beforeEach(() => {
+    delete windowMock.scaleFactor;
     invokeMock.mockReset();
     invokeMock.mockResolvedValue(null);
     (windowMock.outerPosition as ReturnType<typeof vi.fn>).mockReset();
@@ -109,7 +110,21 @@ describe("FloatballView", () => {
     wrapper.unmount();
   });
 
-  it("releases drag when the pointer leaves the window", async () => {
+  it("converts pointer movement to physical pixels at higher display scaling", async () => {
+    windowMock.scaleFactor = vi.fn(async()=>2);
+    (windowMock.outerPosition as ReturnType<typeof vi.fn>).mockResolvedValue({x:120,y:80});
+    const wrapper = mount(FloatballView);
+    await wrapper.trigger("pointerdown",{screenX:20,screenY:20});
+    await wrapper.trigger("pointermove",{screenX:60,screenY:40});
+    await flushPromises();
+    expect(windowMock.setPosition).toHaveBeenCalledWith(expect.objectContaining({x:200,y:120}));
+    await wrapper.trigger("pointerup");
+    await flushPromises();
+    expect(invokeMock).not.toHaveBeenCalledWith("floatball_toggle_main");
+    wrapper.unmount();
+  });
+
+  it("continues dragging outside the ball until the pointer is released", async () => {
     (windowMock.outerPosition as ReturnType<typeof vi.fn>).mockResolvedValue(
       { x: 120, y: 80 } as PositionMock,
     );
@@ -118,11 +133,34 @@ describe("FloatballView", () => {
     await wrapper.trigger("pointermove", { screenX: 100, screenY: 100 });
     await Promise.resolve();
     await wrapper.trigger("pointerleave", { clientX: 100, clientY: 100 });
+    expect(invokeMock).not.toHaveBeenCalled();
+    await wrapper.trigger("pointerup", { clientX: 100, clientY: 100 });
     await Promise.resolve();
     expect(invokeMock).toHaveBeenCalledWith("floatball_save_position", {
       x: 120,
       y: 80,
     });
+    wrapper.unmount();
+  });
+
+  it("opens My Panel with the right button without toggling the launcher", async () => {
+    const wrapper = mount(FloatballView);
+    await wrapper.trigger("pointerdown", {button:2});
+    await wrapper.trigger("pointerup", {button:2});
+    await wrapper.trigger("contextmenu");
+    expect(invokeMock).toHaveBeenCalledWith("panel_show");
+    expect(invokeMock).not.toHaveBeenCalledWith("floatball_toggle_main");
+    expect(windowMock.outerPosition).not.toHaveBeenCalled();
+    wrapper.unmount();
+  });
+
+  it("does not open a window when a click is cancelled", async () => {
+    (windowMock.outerPosition as ReturnType<typeof vi.fn>).mockResolvedValue({x:120,y:80});
+    const wrapper = mount(FloatballView);
+    await wrapper.trigger("pointerdown", {screenX:20,screenY:20});
+    await wrapper.trigger("pointercancel");
+    await flushPromises();
+    expect(invokeMock).not.toHaveBeenCalled();
     wrapper.unmount();
   });
 });

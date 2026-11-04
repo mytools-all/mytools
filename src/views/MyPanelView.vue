@@ -1,8 +1,9 @@
 <template>
-  <section class="my-panel" @keydown.esc="close">
+  <section class="my-panel">
     <header data-tauri-drag-region="deep"><strong>我的面板</strong><span>鼠标中键 · 快速启动</span><button aria-label="关闭面板" @click="close">×</button></header>
-    <div class="panel-tools"><input v-model="query" placeholder="搜索面板入口…" aria-label="搜索面板入口" /><button @click="editing = !editing">{{ editing ? '完成' : '编辑' }}</button><button @click="adding = !adding">＋ 添加</button></div>
-    <div v-if="adding" class="add-form">
+    <div class="panel-tools"><input v-model="query" placeholder="搜索面板入口…" aria-label="搜索面板入口" /><button @click="editing = !editing">{{ editing ? '完成' : '编辑' }}</button><button :aria-expanded="adding" aria-controls="panel-add-form" @click="adding = !adding">{{ adding ? '关闭添加' : '＋ 添加' }}</button></div>
+    <div v-if="adding" id="panel-add-form" class="add-form" role="region" aria-label="添加面板入口">
+      <div class="add-form__heading"><strong>添加入口</strong><button class="add-form__close" @click="adding = false">关闭添加 <span aria-hidden="true">×</span></button></div>
       <select v-model="kind" aria-label="入口类型"><option value="plugin">插件功能</option><option value="app">应用</option><option value="path">文件 / 文件夹</option><option value="url">网址</option></select>
       <select v-if="kind === 'plugin'" v-model="target" aria-label="选择插件功能"><option value="">选择插件功能</option><option v-for="option in pluginOptions" :key="option.target" :value="option.target">{{ option.title }}</option></select>
       <select v-else-if="kind === 'app'" v-model="target" aria-label="选择应用"><option value="">选择应用</option><option v-for="app in apps.entries" :key="app.target" :value="app.target">{{ app.name }}</option></select>
@@ -68,8 +69,8 @@ function add() {
 function remove(id: string) { entries.value = entries.value.filter(e => e.id !== id); }
 function reorder(id: string) { entries.value = movePanelEntry(entries.value, dragged.value, id); dragged.value = ""; }
 function moveEarlier(id: string) { const at = entries.value.findIndex(e => e.id === id); const previous = entries.value[at - 1]; if (previous) entries.value = movePanelEntry(entries.value, id, previous.id); }
-async function close() { if (tauriAvailable()) { const {getCurrentWindow} = await import("@tauri-apps/api/window"); await getCurrentWindow().hide(); } }
-useEventListener(document, "keydown", event => { if (event.key === "Escape") void close(); });
+async function close() { adding.value = false; editing.value = false; if (tauriAvailable()) { const {getCurrentWindow} = await import("@tauri-apps/api/window"); await getCurrentWindow().hide(); } }
+useEventListener(document, "keydown", event => { if (event.key !== "Escape" || event.defaultPrevented) return; event.preventDefault(); if (adding.value) adding.value = false; else if (editing.value) editing.value = false; else void close(); });
 async function browse(directory: boolean) {
   try {
     const {open} = await import("@tauri-apps/plugin-dialog");
@@ -80,7 +81,7 @@ async function browse(directory: boolean) {
 async function launch(entry: PanelEntry) {
   if (editing.value) return;
   try {
-    if (entry.kind === "plugin") await safeInvoke("plugin_open_window", {pluginId: entry.target, feature: entry.feature});
+    if (entry.kind === "plugin") await safeInvoke("plugin_open_window", {pluginId: entry.target, feature: entry.feature, fromPanel:true});
     else await safeInvoke("app_launcher_open", {path: entry.target});
     await close();
   } catch (error) { message.value = error instanceof Error ? error.message : String(error); }
@@ -113,6 +114,8 @@ button,input,select { color:inherit; background:var(--panel-control-bg); border:
 button { cursor:pointer; } button:hover { background:var(--hover-bg); }
 .panel-tools { display:flex; gap:6px; padding:10px; }.panel-tools input { flex:1; min-width:0; }
 .add-form { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:0 10px 10px; }.add-form input,.add-form select { min-width:0; }
+.add-form__heading { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; padding:4px 0; font-size:12px; }
+.add-form__close { color:var(--accent); background:var(--accent-soft); padding:6px 10px; }
 .panel-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-content:start; gap:6px; padding:8px 12px; flex:1; overflow:auto; }
 .entry { border:0; background:transparent; display:flex; width:100%; flex-direction:column; align-items:center; gap:8px; font-size:12px; overflow-wrap:anywhere; min-height:85px; }
 .entry img,.entry-icon { width:34px; height:34px; object-fit:contain; }.entry-icon { display:grid; place-items:center; font-size:23px; color:var(--accent); background:var(--accent-soft); border-radius:10px; }

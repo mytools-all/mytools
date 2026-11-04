@@ -17,7 +17,7 @@ const active = useActivePluginStore();
 const router = useRouter();
 const route = useRoute();
 const { run } = useResultActions();
-const { isFloatballWindow, isPluginWindow, isPanelWindow } = useAppShell();
+const { isFloatballWindow, isPluginWindow, isPanelWindow, isCenterWindow } = useAppShell();
 
 const menuOpen = ref(false);
 
@@ -53,7 +53,7 @@ onBeforeUnmount(() => {
 
 <template>
   <FloatballView v-if="isFloatballWindow" />
-  <RouterView v-else-if="isPluginWindow || isPanelWindow" />
+  <RouterView v-else-if="isPluginWindow || isPanelWindow || isCenterWindow" />
   <div v-else class="app-root">
     <header class="app-header" data-tauri-drag-region="deep">
       <img

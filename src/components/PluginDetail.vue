@@ -6,6 +6,7 @@ import { usePluginsStore } from "@/stores/plugins";
 import { useUsageStore } from "@/stores/usage";
 import { pluginDisplayName } from "@/lib/pluginPresentation";
 import { fallbackIconDataUri } from "@/lib/iconFallback";
+import { safeInvoke, isDetachedCenter } from "@/lib/tauri";
 
 const props = defineProps<{ name: string; embedded?: boolean }>();
 const route=useRoute();
@@ -29,7 +30,7 @@ const notes=computed(()=>entry.value?.notes.length ? entry.value.notes : ["安�
 function back(){const query={...route.query};delete query.detail;void router.push({path:"/plugins",query});}
 async function run(action:()=>Promise<unknown>){pending.value=true;error.value="";try{await action();}catch(e){error.value=String(e);}finally{pending.value=false;}}
 async function uninstallPlugin(){await run(async()=>{if(!await plugins.uninstall(props.name))throw Error(plugins.error || "卸载失败");confirmUninstall.value=false;notice.value="已卸载插件，插件存储的数据仍保留。";});}
-function openPlugin(){const p=installed.value;const feature=p?.manifest.features[0];if(!p||!feature||!p.enabled||p.incompatible)return;usage.bump(p.manifest.name);void router.push({name:"plugin",params:{id:p.manifest.name,code:feature.code}});}
+function openPlugin(){const p=installed.value;const feature=p?.manifest.features[0];if(!p||!feature||!p.enabled||p.incompatible)return;usage.bump(p.manifest.name);if(isDetachedCenter()){void run(()=>safeInvoke("plugin_open_window",{pluginId:p.manifest.name,feature:feature.code}));return;}void router.push({name:"plugin",params:{id:p.manifest.name,code:feature.code}});}
 function safeUrl(url?:string){try{const parsed=new URL(url || "");return ["https:","http:"].includes(parsed.protocol)?parsed.href:undefined;}catch{return undefined;}}
 </script>
 

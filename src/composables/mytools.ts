@@ -41,6 +41,8 @@ export type MyToolsEnvType =
   | "window";
 
 export interface MyToolsEnv {
+  hostSearch?: boolean;
+  launchContext?: boolean;
   code: string;
   type: MyToolsEnvType;
   payload?: unknown;

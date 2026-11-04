@@ -56,6 +56,7 @@
       "license": "MIT",
       "homepage": "https://github.com/mytools-all/mytools-calc#readme",
       "capabilities": [
+        "fs.exporttext",
         "clipboard.write",
         "storage.get",
         "storage.set"
@@ -359,6 +360,7 @@
       "license": "MIT",
       "homepage": "https://github.com/mytools-all/mytools-ocr#readme",
       "capabilities": [
+        "context.read",
         "net.fetch",
         "storage.get",
         "storage.set",
@@ -398,6 +400,7 @@
       "license": "MIT",
       "homepage": "https://github.com/mytools-all/mytools-rename#readme",
       "capabilities": [
+        "context.read",
         "fs.pickdirectory",
         "fs.pickfiles",
         "fs.search",
@@ -466,6 +469,41 @@
         "label": "uTools 文件搜索（Everything）",
         "url": "https://www.u-tools.cn/plugins/detail/搜索大师/"
       }
+    },
+    {
+      "name": "mytools-calendar",
+      "npm": "@mytools-all/mytools-calendar",
+      "version": "0.1.0",
+      "published": false,
+      "title": "我的日历",
+      "description": "公农历、传统节日与每日标签待办，轻松安排每一天。",
+      "category": "效率",
+      "author": "MyTools",
+      "license": "MIT",
+      "repository": "https://github.com/mytools-all/mytools-calendar",
+      "capabilities": [
+        "storage.get",
+        "storage.set"
+      ],
+      "features": [
+        "公历、农历与传统节日离线查看",
+        "公历/农历日期跳转，支持闰月",
+        "每日标签待办、完成状态筛选和月历展示开关"
+      ],
+      "keywords": [
+        "我的日历",
+        "日历",
+        "农历",
+        "待办",
+        "calendar",
+        "todo"
+      ],
+      "notes": [
+        "源码已同步到独立 GitHub 仓库，npm 尚未发布；通过开发者页面安装本地目录或 tgz。",
+        "支持公历 1901—2099 年；节日标注不代表年度调休安排。",
+        "本机存储；多窗口请顺序编辑，重新打开载入最新数据。"
+      ],
+      "homepage": "https://github.com/mytools-all/mytools-calendar#readme"
     }
   ]
 }

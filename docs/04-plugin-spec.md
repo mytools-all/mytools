@@ -1,6 +1,6 @@
 # 04 · 插件规范
 
-> **状态**：设计稿（持续修订）· 相关：[02-architecture](./02-architecture.md) · [05-data-and-storage](./05-data-and-storage.md)
+> **状态**：API v1 参考（以实际 iframe 契约为准；入门见 [开发指南](plugin-development/README.md)）· 相关：[02-architecture](./02-architecture.md) · [05-data-and-storage](./05-data-and-storage.md)
 > **本文回答**：一个插件长什么样？怎么声明所需能力？怎么被授权、怎么被运行、怎么被打包安装？
 
 ## 1. 设计原则
@@ -138,6 +138,7 @@ my-plugin/
 | `fs.importdropped` | — | `{ entries }` | write | 当前窗口最近一次系统拖放，60 秒有效、仅一次；授予所在目录，不接受插件提交路径 |
 | `system.networkdetails` | — | 完整报告文本 | read | 本机 Windows ipconfig /all；系统 OEM 编码解码 |
 | `fs.exporttext` | `{ name?, content }` | `{ path }` 或 `{ cancelled: true }` | write | 仅写用户在系统保存对话框选择的位置；最多 8MB |
+| `context.read` | `{ types: ['files' \| 'image' \| 'text'] }` | `{ version, source, files?, image?, text? }` 或 `null` | exec | 读取面板转交的启动上下文，仅指定窗口和插件可消费一次，120 秒过期 |
 | `screen.pickcolor` | — | `{ hex, rgb, x, y }` | exec | 读取当前光标所在像素；Windows |
 
 `fs.*` 的可访问范围 = 插件沙箱（`<data>/plugin-files/<plugin-id>`，`<data>` = `%LOCALAPPDATA%\MyTools\data`）
@@ -160,7 +161,7 @@ interface MyToolsError {
 }
 ```
 
-规范面**不抛裸异常**：所有失败以 `MyToolsError` 形式 reject，插件可按 `code` 分支处理。
+上面的结构用于宿主内部错误处理。**当前 iframe 桥接仅传回 message 并 reject 一个 Error，插件端不能依赖 code/capability/consentRequired 字段**；捕获 error.message 并显示失败。授权确认与一次重试由宿主完成。保留结构化错误到 iframe 是后续兼容扩展，不能作为已实现功能。
 
 ### 4.4 授权确认流程
 
@@ -259,6 +260,8 @@ interface MyToolsAPI {
 
   // 能力调用（统一入口）
   call<T = unknown>(capability: string, args?: Record<string, unknown>): Promise<T>;
+  onSearch(cb: (event: { query: string; key?: string }) => void): void;
+  onFilesDropped(cb: () => void): void;
 
   // 生命周期
   onPluginReady(cb: (env: MyToolsEnv) => void): void;
@@ -270,6 +273,8 @@ interface MyToolsAPI {
 }
 
 interface MyToolsEnv {
+  hostSearch?: boolean;
+  launchContext?: boolean;
   code: string;                                  // feature code
   type: "text" | "img" | "files" | "regex" | "over" | "window";
   payload?: unknown;
@@ -280,13 +285,13 @@ interface MyToolsEnv {
 
 - 窗口控制、通知、网络等一律通过 `call()` 走能力 id（`window.show`、`system.notify`、`net.fetch` …）。
 - 规范面**不暴露**底层 IPC 细节，插件不得直接访问宿主内部对象。
-- 非桌面环境（浏览器预览）返回 `UNAVAILABLE`，不抛底层异常。
+- 普通浏览器直接打开插件时通常没有 window.mytools，插件需自行显示预览状态并禁用系统操作；宿主侧 API 的非桌面调用返回 UNAVAILABLE。
 - 宿主窗口与插件 iframe 都提供 `window.mytools`：iframe 侧由注入脚本代理到宿主，宿主按插件 id 传 scope，因此授权判定用的是插件自己的来源。
 
 ### 7.1 版本协商
 
 - 宿主在注入 API 时附带 `apiVersion`；插件可读取 `window.mytools.apiVersion` 判断可用能力。
-- `call()` 请求未注册能力 → `CAPABILITY_UNKNOWN`；宿主版本低于插件声明 → 激活阶段即报 `API_VERSION`，插件不进入运行态。
+- 未注册能力在宿主内部产生 CAPABILITY_UNKNOWN，iframe 只获得对应错误文字；宿主版本低于插件声明时在激活阶段提示不兼容，插件不进入运行态。
 
 ## 8. 打包与安装
 
@@ -319,7 +324,7 @@ interface MyToolsEnv {
 - [ ] 清单含 `name` / `version` / `main` / `features`
 - [ ] `features[].code` 唯一；`cmds` 覆盖中英文常见叫法
 - [ ] 只用 `window.mytools.*`，不触碰宿主内部对象
-- [ ] 所有能力调用按 `MyToolsError.code` 分支处理失败
+- [ ] 所有异步能力调用捕获失败；iframe 使用 error.message，不依赖宿主内部错误字段
 - [ ] 声明 `capabilities`，不申请用不到的能力
 - [ ] 不用 `localStorage` 持久化（用 `storage.*`）
 - [ ] 崩溃能被宿主捕获：不吞 `unhandledrejection`

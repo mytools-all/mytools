@@ -13,10 +13,13 @@ mod services;
 use tauri::{Emitter, Manager};
 
 pub fn run() {
+    let mut context = tauri::generate_context!();
+    context.set_default_window_icon(Some(infrastructure::app_identity::icon().expect("invalid bundled MyTools icon")));
     tauri::Builder::default()
         .manage(runtime::PluginSessions::default())
         .manage(runtime::CapabilityExecutor::default())
         .manage(runtime::DroppedFiles::default())
+        .manage(runtime::LaunchContexts::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -33,6 +36,7 @@ pub fn run() {
                 }
             }
             if matches!(event, tauri::WindowEvent::Destroyed) {
+                window.state::<runtime::LaunchContexts>().forget(window.label());
                 window
                     .state::<runtime::PluginSessions>()
                     .forget(window.label());
@@ -99,6 +103,7 @@ pub fn run() {
             commands::plugin_npm::plugin_install_npm,
             commands::catalog::plugin_catalog_fetch,
             commands::plugin_window::plugin_open_window,
+            commands::plugin_window::plugin_center_open_window,
             commands::plugin_window::plugin_close_window,
             commands::plugin_window::plugin_list_windows,
             commands::capability::plugin_capability_call,
@@ -113,7 +118,7 @@ pub fn run() {
             commands::floatball::floatball_toggle_main,
             commands::floatball::floatball_save_position,
         ])
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("error while running MyTools");
 }
 

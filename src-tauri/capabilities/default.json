@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability shared by the main MyTools window and any detached plugin windows.",
-  "windows": ["main", "plugin-*", "floatball", "panel"],
+  "windows": ["main", "plugin-*", "floatball", "panel", "center"],
   "permissions": [
     "core:default",
     "core:window:default",

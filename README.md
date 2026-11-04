@@ -2,7 +2,7 @@
 
 轻量级 Windows 插件工具箱，基于 Tauri 2、Vue 3 和 Rust。版本 0.1.0，MIT 许可。
 
-宿主提供启动器、插件管理、鼠标中键面板、托盘、悬浮球、权限管理和能力桥接。工具插件独立开发、安装和发布，不编译进宿主。
+宿主提供主页、插件管理、鼠标中键面板、托盘、悬浮球、权限管理和能力桥接。工具插件独立开发、安装和发布，不编译进宿主。
 
 ## 仓库
 
@@ -38,6 +38,6 @@ pnpm tauri build
 
 ## 文档与许可
 
-架构和插件 API 见 [docs](docs/README.md)。项目代码使用 [MIT](LICENSE)，第三方依赖保留各自的许可证。
+新维护者或其他 AI 工具先读 [项目上下文](docs/PROJECT-CONTEXT.md) 与 [AGENTS.md](AGENTS.md)。插件作者使用 [插件开发指南](docs/plugin-development/README.md) 和 [Demo 案例](docs/plugin-development/demo-walkthrough.md)；[日历验证记录](docs/plugin-development/validation-calendar.md) 记录文档实作结果。架构和 API 总目录见 [docs](docs/README.md)。项目代码使用 [MIT](LICENSE)，第三方依赖保留各自的许可证。
 
 离线目录快照无需手工维护。发布应用前可运行 `pnpm catalog:sync` 从统一索引更新并校验快照；普通构建不依赖此联网步骤。详情页可确认卸载已安装插件，插件存储数据保留。

@@ -2,6 +2,8 @@
 
 宿主和插件是独立仓库。所有工具均为可单独安装的插件包，不编译进宿主，也不在启动时播种。集中仓库链接与 npm 索引见 [mytools-home](https://github.com/mytools-all/mytools-home)。
 
+入门统一使用 [插件开发指南](plugin-development/README.md) 和 [Demo 案例](plugin-development/demo-walkthrough.md)，本文保留分发与索引职责说明。
+
 ## 包结构
 
 每个插件包含 plugin.json、package.json、index.html、页面脚本、样式和许可证。依赖资源放在同一包中，使用相对路径；不依赖宿主源码或其他插件目录。

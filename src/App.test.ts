@@ -101,6 +101,7 @@ vi.mock("@/lib/tauri", () => ({
     return invokeMock(cmd, a);
   },
   tauriAvailable: () => true,
+  isDetachedCenter: () => false,
 }));
 
 let windowLabel = "main";

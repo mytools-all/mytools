@@ -6,6 +6,7 @@ import { pluginDisplayName } from "@/lib/pluginPresentation";
 import TopTabNav from "@/components/TopTabNav.vue";
 import ToolCatalogGrid from "@/components/ToolCatalogGrid.vue";
 import PluginDetailDrawer from "@/components/PluginDetailDrawer.vue";
+import GrantBrowser from "@/components/GrantBrowser.vue";
 import {
   usePluginsStore,
   type LoadedPlugin,
@@ -14,14 +15,14 @@ import {
 import { useGrantsStore } from "@/stores/grants";
 import { useDirGrantsStore } from "@/stores/dirGrants";
 import { useUsageStore } from "@/stores/usage";
-import { useSearchStore } from "@/stores/search";
+import { useCenterSearchStore } from "@/stores/centerSearch";
 import {
   useSettingsStore,
   SETTINGS_CATEGORIES,
   type SettingsCategory,
   type Theme,
 } from "@/stores/settings";
-import { safeInvoke, tauriAvailable } from "@/lib/tauri";
+import { safeInvoke, tauriAvailable, isDetachedCenter } from "@/lib/tauri";
 import { fallbackIconDataUri } from "@/lib/iconFallback";
 
 const PLUGIN_CENTER_WIDTH = 1024.0;
@@ -35,7 +36,10 @@ const plugins = usePluginsStore();
 const grants = useGrantsStore();
 const dirGrants = useDirGrantsStore();
 const usage = useUsageStore();
-const search = useSearchStore();
+const search = useCenterSearchStore();
+const detached = isDetachedCenter();
+const capabilityRows = computed(() => grants.grants.map(record => ({plugin:record.plugin,permission:record.capability})));
+const directoryRows = computed(() => dirGrants.grants.map(record => ({plugin:record.plugin,permission:record.path})));
 const settings = useSettingsStore();
 const route = useRoute();
 const router = useRouter();
@@ -194,9 +198,14 @@ async function toggle(p: LoadedPlugin) {
   }
 }
 
-function openPlugin(p: LoadedPlugin) {
+async function openPlugin(p: LoadedPlugin) {
   const code = p.manifest.features?.[0]?.code ?? "default";
   usage.bump(p.manifest.name);
+  if (detached) {
+    try { await safeInvoke("plugin_open_window", {pluginId:p.manifest.name, feature:code}); }
+    catch (error) { actionError.value = String(error); }
+    return;
+  }
   void router.push({ name: "plugin", params: { id: p.manifest.name, code } });
 }
 
@@ -281,7 +290,7 @@ async function installFromNpm() {
 }
 
 function layout(width: number, height: number) {
-  if (!tauriAvailable()) return;
+  if (!tauriAvailable() || detached) return;
   void safeInvoke("window_set_layout", {
     resizable: true,
     decorations: false,
@@ -351,8 +360,9 @@ onBeforeUnmount(() => {
     </aside>
 
     <main class="pc__main">
+      <input v-if="detached && section === 'installed'" v-model="search.query" class="pc__search-input pc__installed-search" placeholder="搜索已安装插件…" aria-label="搜索已安装插件" />
       <template v-if="section === 'store'">
-        <ToolCatalogGrid @detail="showDetail" />
+        <ToolCatalogGrid :shared-search="!detached" @detail="showDetail" />
       </template>
 
       <template v-else-if="section === 'installed'">
@@ -485,7 +495,7 @@ onBeforeUnmount(() => {
         />
 
         <div class="pc__settings">
-          <p v-if="search.query.trim()" class="pc__settings-hint">
+          <p v-if="!detached && search.query.trim()" class="pc__settings-hint">
             搜索 “{{ search.query }}” —
             <button class="pc__link" type="button" @click="onSettingsSearchJump(search.query)">
               跳到匹配分类
@@ -530,7 +540,7 @@ onBeforeUnmount(() => {
                   @change="settings.setFloatballEnabled(($event.target as HTMLInputElement).checked)"
                 />
                 <span class="pc__text">悬浮球</span>
-                <span class="pc__hint">桌面右下角小球，拖动换位、单击唤起 launcher</span>
+                <span class="pc__hint">单击打开主页，右键打开我的面板，拖动调整位置</span>
               </label>
             </div>
           </template>
@@ -580,77 +590,17 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="pc__settings-block">
-              <h4 class="pc__side-h">已加载插件</h4>
-              <div class="pc__row">
-                <span class="pc__text">共 {{ plugins.plugins.length }} 个插件</span>
+              <div class="pc__section-head">
+                <div><h4>已加载插件</h4><span class="pc__text">共 {{ plugins.plugins.length }} 个插件</span></div>
                 <button class="pc__btn" @click="rescan">重新扫描</button>
               </div>
             </div>
 
-            <div class="pc__settings-block">
-              <h4 class="pc__side-h">插件授权</h4>
-              <p class="pc__hint">
-                插件请求高权限能力时需要你确认；这里可以查看并撤销已授予的权限。
-              </p>
-              <div class="pc__row">
-                <span class="pc__text">已授权 {{ grants.grants.length }} 项</span>
-                <button class="pc__btn" :disabled="grants.loading" @click="grants.load()">
-                  刷新
-                </button>
-              </div>
-              <ul v-if="grants.grants.length > 0" class="pc__grant-list">
-                <li
-                  v-for="g in grants.grants"
-                  :key="`${g.plugin}:${g.capability}`"
-                  class="pc__grant-item"
-                >
-                  <span class="pc__text">{{ g.plugin }}</span>
-                  <code class="pc__source">{{ g.capability }}</code>
-                  <button
-                    class="pc__btn pc__btn--danger"
-                    @click="grants.revoke(g.plugin, g.capability)"
-                  >
-                    撤销
-                  </button>
-                </li>
-              </ul>
-              <p v-else-if="!grants.loading" class="pc__hint">暂无授权记录</p>
-              <p v-if="grants.error" class="pc__message">{{ grants.error }}</p>
-            </div>
+            <GrantBrowser title="插件授权" description="查看插件已获准使用的能力，可按插件或权限分组并逐项撤销。" :records="capabilityRows" :loading="grants.loading" :error="grants.error" :revoke="grants.revoke" @refresh="grants.load()" />
           </template>
 
           <template v-else-if="settings.settingsCategory === 'data'">
-            <div class="pc__settings-block">
-              <h4 class="pc__side-h">目录授权</h4>
-              <p class="pc__hint">
-                插件访问真实文件目录需要你的授权：插件内触发「选择目录」后由系统对话框确认，
-                这里可以随时撤销。
-              </p>
-              <div class="pc__row">
-                <span class="pc__text">已授权 {{ dirGrants.grants.length }} 个目录</span>
-                <button class="pc__btn" :disabled="dirGrants.loading" @click="dirGrants.load()">
-                  刷新
-                </button>
-              </div>
-              <ul v-if="dirGrants.grants.length > 0" class="pc__grant-list">
-                <li
-                  v-for="g in dirGrants.grants"
-                  :key="`${g.plugin}:${g.path}`"
-                  class="pc__grant-item"
-                >
-                  <span class="pc__text">{{ g.plugin }}</span>
-                  <code class="pc__source" :title="g.path">{{ g.path }}</code>
-                  <button
-                    class="pc__btn pc__btn--danger"
-                    @click="dirGrants.revoke(g.plugin, g.path)"
-                  >
-                    撤销
-                  </button>
-                </li>
-              </ul>
-              <p v-else-if="!dirGrants.loading" class="pc__hint">暂无目录授权</p>
-              <p v-if="dirGrants.error" class="pc__message">{{ dirGrants.error }}</p>
-            </div>
+            <GrantBrowser title="目录授权" description="按插件或授权目录查看目录访问权限。撤销后，插件再次访问需重新授权。" directory :records="directoryRows" :loading="dirGrants.loading" :error="dirGrants.error" :revoke="dirGrants.revoke" @refresh="dirGrants.load()" />
           </template>
 
           <template v-else>
@@ -672,6 +622,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .pc {
+  background: var(--panel-bg);
   flex: 1;
   display: flex;
   gap: 18px;
@@ -728,11 +679,14 @@ onBeforeUnmount(() => {
 
 .pc__row {
   display: flex;
+  align-items: center;
   gap: 10px;
 }
 
 .pc__search-input {
-  flex: 1;
+  flex: 0 0 auto;
+  height: 36px;
+  width: 100%;
   min-width: 0;
   padding: 8px 12px;
   border-radius: 8px;
@@ -742,6 +696,8 @@ onBeforeUnmount(() => {
   font-size: 13px;
   outline: none;
 }
+
+.pc__row > .pc__search-input { flex:1 1 0; width:auto; }
 
 .pc__search-input:focus {
   border-color: var(--accent);
@@ -778,6 +734,8 @@ onBeforeUnmount(() => {
 }
 
 .pc__settings {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -796,6 +754,7 @@ onBeforeUnmount(() => {
 }
 
 .pc__settings-block {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -804,6 +763,11 @@ onBeforeUnmount(() => {
   border: 1px solid var(--panel-control-border);
   border-radius: 10px;
 }
+
+.pc__section-head,.pc__section-head>div { display:flex; align-items:center; gap:12px; }
+.pc__section-head { justify-content:space-between; }
+.pc__section-head h4 { margin:0; font-size:13px; font-weight:600; }
+.pc__settings-block > .pc__hint { margin:0; line-height:1.6; }
 
 .pc__settings-toggle {
   display: flex;
@@ -1029,24 +993,6 @@ onBeforeUnmount(() => {
   margin: 2px 0 0;
   font-size: 11px;
   color: #d9534f;
-}
-
-.pc__grant-list {
-  list-style: none;
-  margin: 6px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.pc__grant-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--panel-border);
-  font-size: 12px;
 }
 
 .pc__star {

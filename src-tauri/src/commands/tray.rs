@@ -39,9 +39,9 @@ impl TrayMenuId {
 pub fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let settings = MenuItem::with_id(app, "settings", "设置…", true, None::<&str>)?;
     let show_launcher =
-        MenuItem::with_id(app, "show-launcher", "显示 launcher", true, None::<&str>)?;
+        MenuItem::with_id(app, "show-launcher", "显示主页", true, None::<&str>)?;
     let hide_launcher =
-        MenuItem::with_id(app, "hide-launcher", "隐藏 launcher", true, None::<&str>)?;
+        MenuItem::with_id(app, "hide-launcher", "隐藏主页", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let restart = MenuItem::with_id(app, "restart", "重启", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;

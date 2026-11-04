@@ -4,7 +4,7 @@
 
 ## 1. 存储布局（Layout B）
 
-Windows 数据按「安装 / 数据 / 配置」三分，路径解析唯一入口为 `commands/paths.rs`：
+Windows 数据按「安装 / 数据 / 配置」三分，路径解析入口为 `infrastructure/paths.rs`：
 
 | 位置 | 内容 | 备注 |
 |---|---|---|

@@ -82,4 +82,14 @@ describe("grants store", () => {
     await store.load();
     expect(store.error).toContain("store unavailable");
   });
+
+  it("preserves a failed revocation and does not mask it by refreshing", async () => {
+    invokeMock.mockRejectedValueOnce(new Error("revoke failed"));
+    const store = useGrantsStore();
+    store.grants = [{plugin:"demo",capability:"fs.read",grantedAt:"fixture"}];
+    await store.revoke("demo","fs.read");
+    expect(store.error).toContain("revoke failed");
+    expect(store.grants).toHaveLength(1);
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+  });
 });

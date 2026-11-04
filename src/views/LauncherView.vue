@@ -198,7 +198,7 @@ defineExpose({ detachSelectedToWindow });
           pinnable
           pin-on-hover
           :pinned-ids="pinnedIdSet"
-          empty-text="还没有使用记录；在插件中心安装插件后，从启动器打开会自动出现在这里。"
+          empty-text="还没有使用记录；在插件中心安装插件后，从主页打开会自动出现在这里。"
           @open="openPluginByName"
           @remove="onRemoveRecent"
           @pin="onPinTile"

@@ -56,6 +56,7 @@ export function usePluginRuntime() {
       apiVersion: MYTOOLS_API_VERSION,
       plugin: pluginName.value,
       hostSearch: pluginSearch.enabled,
+      ...(route.query.context === "panel" ? {launchContext: true} : {}),
     };
   }
 

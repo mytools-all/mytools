@@ -132,6 +132,7 @@ fn initialize_health(app: &tauri::App) {
 
 fn initialize_desktop(app: &tauri::App, settings: &SettingsState) {
     if let Some(window) = app.get_webview_window("main") {
+        if let Err(error) = crate::infrastructure::app_identity::apply(&window) { tracing::warn!("main window icon: {error}"); }
         let saved = settings.get();
         match (
             saved.main_x,

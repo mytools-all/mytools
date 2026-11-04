@@ -52,8 +52,8 @@ function onClose() {
     <button
       type="button"
       class="pab__close"
-      aria-label="返回启动器"
-      title="返回启动器"
+      aria-label="返回主页"
+      title="返回主页"
       @click="onClose"
     >
       ×

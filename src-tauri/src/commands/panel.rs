@@ -4,8 +4,11 @@ use tauri::{Manager, PhysicalPosition, WebviewUrl, WebviewWindowBuilder};
 pub fn initialize(app: &tauri::AppHandle, enabled: bool) -> Result<(), String> {
     let handle = app.clone();
     crate::infrastructure::middle_mouse::install(Box::new(move |x, y| {
+        let foreground = crate::infrastructure::launch_context::foreground();
         let task_app = handle.clone();
         tauri::async_runtime::spawn_blocking(move || {
+            let payload = crate::infrastructure::launch_context::capture(&task_app, foreground);
+            task_app.state::<crate::runtime::LaunchContexts>().capture(payload);
             if let Err(error) = show(&task_app, Some((x, y))) { tracing::warn!("panel: {error}"); }
         });
     }))?;
@@ -36,7 +39,12 @@ fn show(app: &tauri::AppHandle, position: Option<(i32, i32)>) -> Result<(), Stri
 
 #[tauri::command]
 pub async fn panel_show(app: tauri::AppHandle) -> Result<(), String> {
-    tauri::async_runtime::spawn_blocking(move || show(&app, None)).await.map_err(|e| e.to_string())?
+    let foreground = crate::infrastructure::launch_context::foreground();
+    tauri::async_runtime::spawn_blocking(move || {
+        let payload = crate::infrastructure::launch_context::capture(&app, foreground);
+        app.state::<crate::runtime::LaunchContexts>().capture(payload);
+        show(&app, None)
+    }).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]

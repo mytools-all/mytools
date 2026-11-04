@@ -14,6 +14,7 @@ export function useAppShell() {
   const isFloatballWindow = computed(() => windowLabel.value === "floatball");
   const isPluginWindow = computed(() => windowLabel.value.startsWith("plugin-"));
   const isPanelWindow = computed(() => windowLabel.value === "panel");
+  const isCenterWindow = computed(() => windowLabel.value === "center");
   const plugins = usePluginsStore();
   const settings = useSettingsStore();
   const appIndex = useAppIndexStore();
@@ -23,7 +24,7 @@ export function useAppShell() {
   let unlistenTray: (() => void) | undefined;
 
   useWebviewHealth();
-  useWindowLifecycle({ onFocusGained: () => { void appIndex.refreshIfStale(); }, keepVisibleOnBlur: () => route.name === "plugin" || isPluginWindow.value });
+  useWindowLifecycle({ onFocusGained: () => { void appIndex.refreshIfStale(); }, keepVisibleOnBlur: () => route.name === "plugin" || isPluginWindow.value || isCenterWindow.value });
 
   async function handleTrayAction(action: string) {
     if (disposed || windowLabel.value !== "main") return;
@@ -52,7 +53,7 @@ export function useAppShell() {
       }
     }
     if (disposed) return;
-    if (!isFloatballWindow.value && !isPluginWindow.value) void appIndex.ensureLoaded();
+    if (!isFloatballWindow.value && !isPluginWindow.value && !isCenterWindow.value && !isPanelWindow.value) void appIndex.ensureLoaded();
     if (!isFloatballWindow.value) await plugins.startListening();
     if (disposed) { plugins.stopListening(); return; }
     const results = await Promise.allSettled([settings.applyTheme(), plugins.ensureLoaded()]);
@@ -79,5 +80,5 @@ export function useAppShell() {
     if (!isFloatballWindow.value) plugins.stopListening();
   });
 
-  return { windowLabel, isFloatballWindow, isPluginWindow, isPanelWindow };
+  return { windowLabel, isFloatballWindow, isPluginWindow, isPanelWindow, isCenterWindow };
 }

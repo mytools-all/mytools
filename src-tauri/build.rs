@@ -4,6 +4,7 @@ use std::process::Command;
 use tauri_build::WindowsAttributes;
 
 fn main() {
+    println!("cargo:rerun-if-changed=icons");
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows")
         && std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("gnu")
     {
@@ -12,7 +13,7 @@ fn main() {
 
     tauri_build::try_build(
         tauri_build::Attributes::new()
-            .windows_attributes(WindowsAttributes::new_without_app_manifest()),
+            .windows_attributes(WindowsAttributes::new_without_app_manifest().window_icon_path("icons/icon.ico")),
     )
     .expect("failed to run tauri-build");
 

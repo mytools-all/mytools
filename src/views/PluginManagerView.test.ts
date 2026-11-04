@@ -8,6 +8,7 @@ import { useSettingsStore } from "@/stores/settings";
 
 let pluginListOverride: LoadedPlugin[] | null = null;
 let dirGrantsOverride: { plugin: string; path: string }[] = [];
+let detached = false;
 
 const invokeMock = vi.fn(async (cmd: string, _args?: unknown): Promise<unknown> => {
   if (cmd === "plugin_list") return pluginListOverride ?? pluginFixture();
@@ -35,6 +36,7 @@ vi.mock("@/lib/tauri", () => ({
     return invokeMock(cmd, a);
   },
   tauriAvailable: () => true,
+  isDetachedCenter: () => detached,
 }));
 
 function officialFixture(): LoadedPlugin[] {
@@ -105,6 +107,7 @@ async function mountView(section = "installed") {
 
 describe("PluginManagerView (插件中心)", () => {
   beforeEach(() => {
+    detached = false;
     setActivePinia(createPinia());
     invokeMock.mockClear();
     pluginListOverride = null;
@@ -115,6 +118,22 @@ describe("PluginManagerView (插件中心)", () => {
     const { wrapper } = await mountView("store");
     expect(wrapper.find(".pc__side-nav-item--active").text()).toBe("插件商店");
     expect(wrapper.findAll(".tc__card").length).toBeGreaterThan(0);
+  });
+
+  it.each(["dev", "settings"])("removes the detached page search from %s", async (section) => {
+    detached = true;
+    const {wrapper} = await mountView(section);
+    expect(wrapper.find(".pc__main > .pc__search-input").exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("keeps a dedicated search for detached installed plugins", async () => {
+    detached = true;
+    const {wrapper} = await mountView("installed");
+    await wrapper.get(".pc__installed-search").setValue("计算稿纸");
+    expect(wrapper.findAll(".pc__iitem")).toHaveLength(1);
+    expect(wrapper.get(".pc__iitem").text()).toContain("计算稿纸");
+    wrapper.unmount();
   });
 
   it("has store, installed and developer sections", async () => {
@@ -172,7 +191,7 @@ describe("PluginManagerView (插件中心)", () => {
     useSettingsStore().settingsCategory = "data";
     await flushPromises();
     const revoke = wrapper
-      .findAll(".pc__grant-item .pc__btn")
+      .findAll(".grants__revoke")
       .find((b) => b.text() === "撤销")!;
     await revoke.trigger("click");
     await flushPromises();

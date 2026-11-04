@@ -8,6 +8,7 @@ import type { ToolEntry } from "@/data/toolCatalog";
 
 const store = useToolCatalogStore();
 const plugins = usePluginsStore();
+withDefaults(defineProps<{sharedSearch?: boolean}>(), {sharedSearch:false});
 const emit = defineEmits<{detail:[name:string]}>();
 onMounted(() => { void store.refresh(); });
 
@@ -45,6 +46,7 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
   <div class="tc">
     <div class="tc__head">
       <input
+        v-if="!sharedSearch"
         v-model="store.query"
         class="tc__search"
         spellcheck="false"

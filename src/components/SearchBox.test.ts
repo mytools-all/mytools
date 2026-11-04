@@ -5,6 +5,8 @@ import { createRouter, createMemoryHistory } from "vue-router";
 import SearchBox from "@/components/SearchBox.vue";
 import { useSearchStore } from "@/stores/search";
 import { usePluginSearchStore } from "@/stores/pluginSearch";
+import { useToolCatalogStore } from "@/stores/toolCatalog";
+import { useCenterSearchStore } from "@/stores/centerSearch";
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(async (_cmd: string, args?: { query?: string }) => {
@@ -58,6 +60,23 @@ describe("SearchBox", () => {
     const { wrapper } = await mountBox("/plugin/demo/index");
     await wrapper.find("input").trigger("keydown", { key: "Backspace" });
     expect(wrapper.emitted("back")).toBeTruthy();
+  });
+  it("filters the store through its query without triggering launcher searches", async () => {
+    const {wrapper, search} = await mountBox("/plugins?section=store");
+    await wrapper.find("input").setValue("计算");
+    expect(useToolCatalogStore().query).toBe("计算");
+    expect(search.query).toBe("");
+    await wrapper.find("input").trigger("keydown", {key:"Enter"});
+    expect(wrapper.emitted("select")).toBeUndefined();
+    wrapper.unmount();
+  });
+  it("keeps installed plugin filtering separate from the catalog query", async () => {
+    const {wrapper, search} = await mountBox("/plugins?section=installed");
+    await wrapper.find("input").setValue("文件");
+    expect(useCenterSearchStore().query).toBe("文件");
+    expect(useToolCatalogStore().query).toBe("");
+    expect(search.query).toBe("");
+    wrapper.unmount();
   });
   it("routes opted-in plugin input to the plugin instead of the global query", async () => {
     const {wrapper,search}=await mountBox("/plugin/fixture/main");

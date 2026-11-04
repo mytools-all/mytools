@@ -20,6 +20,7 @@ const rootRef = ref<HTMLElement | null>(null);
 const detaching = ref(false);
 
 const detachEnabled = computed(() => {
+  if (route.path === "/plugins") return true;
   if (route.name === "launcher") {
     const item = search.results[search.selectedIndex];
     return item?.kind === "plugin";
@@ -52,7 +53,11 @@ async function onDetach() {
   if (!detachEnabled.value) return;
   detaching.value = true;
   try {
-    if (route.name === "launcher") {
+    if (route.path === "/plugins") {
+      await safeInvoke("plugin_center_open_window", {section: route.query.section || "store"});
+      search.reset();
+      void router.push({name: "launcher"});
+    } else if (route.name === "launcher") {
       const item = search.results[search.selectedIndex];
       if (!item || item.kind !== "plugin") return;
       const [pluginId, feature] = item.id.split(":");
@@ -124,7 +129,7 @@ void plugins;
         <span class="md__plugin-name">当前插件：{{ active.plugin.title }}</span>
       </div>
       <button class="md__item" type="button" role="menuitem" @click="onBackToLauncher">
-        <span class="md__item-label">返回启动器</span>
+        <span class="md__item-label">返回主页</span>
         <span class="md__item-hint">清空当前插件</span>
       </button>
       <div class="md__divider"></div>

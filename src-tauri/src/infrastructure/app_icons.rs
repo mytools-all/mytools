@@ -390,7 +390,7 @@ fn bgra_to_png_data_uri(w: u32, h: u32, bgra: &[u8]) -> Option<String> {
     Some(format!("data:image/png;base64,{}", base64_encode(&png)))
 }
 
-fn base64_encode(bytes: &[u8]) -> String {
+pub(crate) fn base64_encode(bytes: &[u8]) -> String {
     const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
     for chunk in bytes.chunks(3) {

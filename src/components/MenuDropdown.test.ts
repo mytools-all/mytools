@@ -55,22 +55,22 @@ describe("MenuDropdown", () => {
   it("hides the plugin info block when no plugin is active", async () => {
     const { wrapper } = await mountMenu();
     expect(wrapper.find(".md__plugin-info").exists()).toBe(false);
-    expect(wrapper.text()).not.toContain("返回启动器");
+    expect(wrapper.text()).not.toContain("返回主页");
   });
 
-  it("shows the active plugin info and 返回启动器 when active", async () => {
+  it("shows the active plugin info and 返回主页 when active", async () => {
     const { wrapper, active } = await mountMenu();
     active.set({ id: "demo", name: "demo", code: "index", title: "示例插件" });
     await wrapper.vm.$nextTick();
     expect(wrapper.find(".md__plugin-info").text()).toContain("示例插件");
-    expect(wrapper.text()).toContain("返回启动器");
+    expect(wrapper.text()).toContain("返回主页");
   });
 
-  it("返回启动器 clears the active plugin", async () => {
+  it("返回主页 clears the active plugin", async () => {
     const { wrapper, active } = await mountMenu();
     active.set({ id: "demo", name: "demo", code: "index", title: "示例插件" });
     await wrapper.vm.$nextTick();
-    const back = wrapper.findAll(".md__item").find((b) => b.text().includes("返回启动器"))!;
+    const back = wrapper.findAll(".md__item").find((b) => b.text().includes("返回主页"))!;
     await back.trigger("click");
     expect(active.plugin).toBeNull();
   });
@@ -104,6 +104,17 @@ describe("MenuDropdown", () => {
     await wrapper.vm.$nextTick();
     const item = wrapper.findAll(".md__item").find((b) => b.text().includes("分离窗口"))!;
     expect(item.attributes("disabled")).toBeUndefined();
+  });
+
+  it.each(["store", "installed", "dev", "settings"])("detaches plugin center section %s", async (section) => {
+    const {wrapper, router} = await mountMenu(`/plugins?section=${section}`);
+    const item = wrapper.findAll(".md__item").find(button => button.text().includes("分离窗口"))!;
+    expect(item.attributes("disabled")).toBeUndefined();
+    await item.trigger("click");
+    await flushPromises();
+    const {safeInvoke} = await import("@/lib/tauri");
+    expect(safeInvoke).toHaveBeenCalledWith("plugin_center_open_window", {section});
+    expect(router.currentRoute.value.name).toBe("launcher");
   });
 
   it("emits close when an item is clicked", async () => {

@@ -1,5 +1,6 @@
 mod app;
 mod clipboard;
+mod context;
 mod fs;
 mod net;
 mod screen;
@@ -24,6 +25,7 @@ pub fn build_registry<R: Runtime>(
     shell::register(app, &mut registry)?;
     system::register(app, &mut registry)?;
     app::register(app, &mut registry)?;
+    context::register(app, &mut registry, Arc::clone(&dir_grants))?;
     fs::register(app, &mut registry, dir_grants)?;
     net::register(app, &mut registry)?;
     window::register(app, &mut registry)?;

@@ -37,6 +37,7 @@ export const useGrantsStore = defineStore("grants", () => {
       error.value = null;
     } catch (err) {
       error.value = String(err);
+      return;
     }
     await load();
   }

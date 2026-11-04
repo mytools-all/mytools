@@ -4,12 +4,18 @@ import { useRoute } from "vue-router";
 import { useSearchStore, matchRouteCommand, type SearchResult } from "@/stores/search";
 import { encodeRouteTarget } from "@/composables/useResultActions";
 import { usePluginSearchStore } from "@/stores/pluginSearch";
+import { useCenterSearchStore } from "@/stores/centerSearch";
+import { useToolCatalogStore } from "@/stores/toolCatalog";
 
 const store = useSearchStore();
 const route = useRoute();
 const pluginSearch = usePluginSearchStore();
+const centerSearch = useCenterSearchStore();
+const catalog = useToolCatalogStore();
+const inCenter = computed(() => route.path === "/plugins");
+const centerStore = computed(() => route.query.section === "store" || !route.query.section);
 const shared = computed(() => route.name === "plugin" && pluginSearch.enabled);
-const text = computed({get:()=>shared.value ? pluginSearch.query : store.query,set:(value:string)=>{if(shared.value)pluginSearch.query=value;else store.query=value;}});
+const text = computed({get:()=>inCenter.value ? (centerStore.value ? catalog.query : centerSearch.query) : shared.value ? pluginSearch.query : store.query,set:(value:string)=>{if(inCenter.value){if(centerStore.value)catalog.query=value;else centerSearch.query=value;}else if(shared.value)pluginSearch.query=value;else store.query=value;}});
 const inputRef = ref<HTMLInputElement | null>(null);
 
 const emit = defineEmits<{
@@ -37,6 +43,10 @@ watch(
 
 async function onKeydown(e: KeyboardEvent) {
   if (e.isComposing || e.keyCode === 229) return;
+  if (inCenter.value) {
+    if (e.key === "Backspace" && !text.value) { e.preventDefault(); emit("back"); }
+    return;
+  }
   if (shared.value) {
     if (["ArrowDown", "ArrowUp", "Enter", "Escape"].includes(e.key)) {
       e.preventDefault(); pluginSearch.key = ""; await nextTick(); pluginSearch.key = e.key;

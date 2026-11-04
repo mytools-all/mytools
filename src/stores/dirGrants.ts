@@ -36,6 +36,7 @@ export const useDirGrantsStore = defineStore("dirGrants", () => {
       error.value = null;
     } catch (err) {
       error.value = String(err);
+      return;
     }
     await load();
   }

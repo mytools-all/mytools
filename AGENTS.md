@@ -4,7 +4,7 @@ Windows 宿主，Tauri 2 + Vue 3 + Rust。只维护平台和能力，插件均�
 
 ## 阅读顺序
 
-docs/README.md、01-requirements.md、02-architecture.md、04-plugin-spec.md、07-testing.md、10-plugins-and-tools.md。
+docs/PROJECT-CONTEXT.md、docs/README.md、01-requirements.md、02-architecture.md、04-plugin-spec.md、07-testing.md、10-plugins-and-tools.md。
 
 ## 命令
 
@@ -40,3 +40,7 @@ src-tauri/rust-toolchain.toml 锁定 GNU，不能切回 MSVC。build.rs 嵌入 C
 ## 发布
 
 宿主和插件版本起点为 0.1.0，项目 MIT，第三方许可不能覆盖。npm 插件使用 @mytools-all/<运行时身份名>，plugin.json.name 保持无作用域身份。索引仓库为 mytools-all/mytools-home。
+
+## 独立插件开发
+
+先读 docs/plugin-development/README.md 与 demo-walkthrough.md，只使用公开 API；完整业务验证见 validation-calendar.md。文档描述必须区分实际实现与设计目标。
