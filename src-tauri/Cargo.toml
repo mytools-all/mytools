@@ -85,6 +85,7 @@ windows = { version = "0.57", features = [
 ] }
 windows-core = "0.57"
 image = { version = "0.25", default-features = false, features = ["png"] }
+xz2 = { version = "0.1.7", features = ["static"] }
 
 [dev-dependencies]
 tempfile = "3"

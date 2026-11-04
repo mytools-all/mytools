@@ -162,3 +162,5 @@ pnpm test:e2e:driver
 离线目录快照无需手工维护。发布应用前可运行 `pnpm catalog:sync` 从统一索引更新并校验快照；普通构建不依赖此联网步骤。详情页可确认卸载已安装插件，插件存储数据保留。
 
 E2E 使用标准 WebDriver Classic 协议（`wdio:enforceWebDriverClassic`），避免依赖嵌入式旧 WebView2 的 BiDi 实现；配置说明见 [WebdriverIO capabilities](https://v9.webdriver.io/docs/capabilities/)。初始化钩子失败时也会保留页面 URL、HTML 与截图诊断。
+
+Windows 发布构建通过 `xz2/static` 保留压缩格式支持并静态链接 liblzma，不要求用户安装 MSYS2。CI 会检查 EXE 和随包 DLL 的 PE 导入表，未随包提供的非系统 DLL 会阻止发布。第三方运行库声明见 THIRD_PARTY_NOTICES.txt。

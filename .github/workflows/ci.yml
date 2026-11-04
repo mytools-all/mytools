@@ -27,8 +27,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Driver version regression
-        run: node --test scripts/webview2-runtime.test.mjs
+      - name: Runtime packaging regressions
+        run: node --test scripts/webview2-runtime.test.mjs scripts/runtime-deps.test.mjs
 
       - name: Lint
         run: pnpm lint:frontend
@@ -150,6 +150,8 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force ci-app | Out-Null
           Copy-Item src-tauri/target/release/mytools.exe, src-tauri/resources/WebView2Loader.dll ci-app/
+          node scripts/check-runtime-deps.mjs ci-app/mytools.exe
+          if ($LASTEXITCODE -ne 0) { throw "Runtime dependency check failed" }
 
       - name: Upload release exe
         if: success()

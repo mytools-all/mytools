@@ -50,7 +50,9 @@
       }
     },
     "resources": {
-      "resources/WebView2Loader.dll": "WebView2Loader.dll"
+      "resources/WebView2Loader.dll": "WebView2Loader.dll",
+      "../LICENSE": "LICENSE",
+      "../THIRD_PARTY_NOTICES.txt": "THIRD_PARTY_NOTICES.txt"
     }
   }
 }
