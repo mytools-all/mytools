@@ -8,7 +8,7 @@ use mytools_core::plugin_mgmt::{
 };
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::Sender;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 struct Inner {
     plugins: Vec<LoadedPlugin>,
@@ -19,6 +19,7 @@ struct Inner {
 
 pub struct PluginRegistry {
     inner: RwLock<Inner>,
+    mutation: Mutex<()>,
     state_path: PathBuf,
     origins_path: PathBuf,
     watcher_tx: RwLock<Option<Sender<PathBuf>>>,
@@ -31,6 +32,7 @@ impl PluginRegistry {
             state_path.with_file_name(mytools_core::plugin_mgmt::PLUGIN_ORIGINS_FILE);
         let origins = PluginOrigins::load(&origins_path).unwrap_or_default();
         Self {
+            mutation: Mutex::new(()),
             inner: RwLock::new(Inner {
                 plugins: Vec::new(),
                 state,
@@ -92,6 +94,7 @@ impl PluginRegistry {
     }
 
     pub fn set_root(&self, root: &Path) -> Result<usize, String> {
+        let _mutation = self.mutation.lock().map_err(|e| e.to_string())?;
         let count = self.reload(root)?;
         if let Some(tx) = self.watcher_tx.read().expect("watcher read").as_ref() {
             let _ = tx.send(root.to_path_buf());
@@ -160,6 +163,7 @@ impl PluginRegistry {
     }
 
     pub fn uninstall(&self, name: &str) -> Result<(), String> {
+        let _mutation = self.mutation.lock().map_err(|e| e.to_string())?;
         let root = self
             .root()
             .ok_or_else(|| "plugins root not set".to_string())?;
@@ -177,6 +181,7 @@ impl PluginRegistry {
     }
 
     pub fn install_dir(&self, src: &Path) -> Result<String, String> {
+        let _mutation = self.mutation.lock().map_err(|e| e.to_string())?;
         let root = self
             .root()
             .ok_or_else(|| "plugins root not set".to_string())?;
@@ -185,6 +190,7 @@ impl PluginRegistry {
     }
 
     pub fn install_pack(&self, pack: &Path) -> Result<String, String> {
+        let _mutation = self.mutation.lock().map_err(|e| e.to_string())?;
         let root = self
             .root()
             .ok_or_else(|| "plugins root not set".to_string())?;
@@ -199,6 +205,17 @@ impl PluginRegistry {
             _ => return Err(format!("unsupported archive type: .{}", ext)),
         };
         self.rescan().map(|_| name)
+    }
+
+    pub fn update_pack(&self, pack: &Path, name: &str, from_version: &str, version: &str) -> Result<String, String> {
+        let _mutation = self.mutation.lock().map_err(|e| e.to_string())?;
+        let root = self.root().ok_or_else(|| "plugins root not set".to_string())?;
+        let guard = self.inner.write().map_err(|e| e.to_string())?;
+        let result = mytools_core::plugin_mgmt::update_from_tar_gz(pack, &root, name, from_version, version).map_err(|e| e.to_string());
+        drop(guard);
+        let installed = result?;
+        self.rescan()?;
+        Ok(installed)
     }
 
     pub fn open_dir(&self, name: &str) -> Option<PathBuf> {

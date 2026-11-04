@@ -511,6 +511,43 @@
       ],
       "homepage": "https://github.com/mytools-all/mytools-calendar#readme",
       "icon": "https://raw.githubusercontent.com/mytools-all/mytools-calendar/main/icon.svg"
+    },
+    {
+      "name": "mytools-clock",
+      "npm": "@mytools-all/mytools-clock",
+      "version": "0.1.0",
+      "published": false,
+      "title": "打卡",
+      "description": "成对记录上下班，计算最早下班时间与多周期工时统计",
+      "category": "效率",
+      "author": "MyTools",
+      "license": "MIT",
+      "repository": "https://github.com/mytools-all/mytools-clock",
+      "features": [
+        "简洁与复杂页面、侧边设置",
+        "按每日工时或固定时间限制即时下班",
+        "目标工时、当天工时与最早下班计算",
+        "日周月季度年与自定义范围统计",
+        "Markdown、Excel XML、JSON 导出及 JSON 确认合并导入"
+      ],
+      "keywords": [
+        "打卡",
+        "工时",
+        "上班",
+        "考勤",
+        "clock"
+      ],
+      "capabilities": [
+        "storage.get",
+        "storage.set",
+        "fs.exporttext"
+      ],
+      "notes": [
+        "源码已公开，npm 0.1.0 发布请求已提交；公开下载核验成功后启用商店安装。",
+        "Excel 导出为可直接打开的 XML 工作簿，JSON 为完整备份；不连接企业考勤系统。"
+      ],
+      "homepage": "https://github.com/mytools-all/mytools-clock#readme",
+      "icon": "https://raw.githubusercontent.com/mytools-all/mytools-clock/main/icon.svg"
     }
   ]
 }

@@ -1,19 +1,13 @@
-$msedgedriver = "$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Packages\Microsoft.EdgeDriver_Microsoft.Winget.Source_8wekyb3d8bbwe\msedgedriver.exe"
-if (-not (Test-Path -LiteralPath $msedgedriver)) {
-    Write-Host "[MyTools] msedgedriver.exe not found at $msedgedriver" -ForegroundColor Red
-    Write-Host "[MyTools]     install via: winget install Microsoft.EdgeDriver --accept-source-agreements --accept-package-agreements"
-    exit 1
-}
-$env:PATH = "$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Packages\Microsoft.EdgeDriver_Microsoft.Winget.Source_8wekyb3d8bbwe;$env:PATH"
-$env:MYTOOLS_E2E_EXE = "$env:LOCALAPPDATA\MyTools\mytools.exe"
-if (-not (Test-Path -LiteralPath $env:MYTOOLS_E2E_EXE)) {
-    Write-Host "[MyTools] mytools.exe not found at $env:MYTOOLS_E2E_EXE" -ForegroundColor Red
-    Write-Host "[MyTools]     build via: pnpm tauri build --no-bundle"
-    exit 1
-}
-$env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=0"
-$taskRepoRoot = Split-Path $PSScriptRoot -Parent
-$env:WEBVIEW2_USER_DATA_FOLDER = Join-Path $taskRepoRoot ("src-tauri/target/cdp/e2e-" + [guid]::NewGuid().ToString("N"))
-Write-Host "[MyTools] CDP profile: $env:WEBVIEW2_USER_DATA_FOLDER"
-Write-Host "[MyTools] starting tauri-driver on port 4440 (msedgedriver path: $msedgedriver)" -ForegroundColor Cyan
-& tauri-driver --port 4440 --native-port 4441
+[CmdletBinding()]
+param([string]$ApplicationPath = (Join-Path $PSScriptRoot '../src-tauri/target/release/mytools.exe'))
+$ErrorActionPreference = 'Stop'
+if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7+ is required' }
+if (-not (Test-Path -LiteralPath $ApplicationPath)) { throw 'Build the application first: pnpm tauri build --no-bundle' }
+$env:MYTOOLS_E2E_EXE = (Resolve-Path -LiteralPath $ApplicationPath).Path
+$taskDriver = & (Join-Path $PSScriptRoot 'setup-e2e-driver.ps1') -ApplicationPath $env:MYTOOLS_E2E_EXE
+$env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = '--remote-debugging-port=0'
+$env:WEBVIEW2_USER_DATA_FOLDER = Join-Path $PSScriptRoot ("../src-tauri/target/e2e-profile/" + [guid]::NewGuid().ToString('N'))
+Write-Host "Application: $env:MYTOOLS_E2E_EXE"
+Write-Host 'Use another PowerShell terminal: pnpm test:e2e'
+& tauri-driver --port 4440 --native-port 4441 --native-driver $taskDriver
+exit $LASTEXITCODE

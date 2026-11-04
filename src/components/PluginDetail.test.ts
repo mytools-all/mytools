@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
+import { useToolCatalogStore } from "@/stores/toolCatalog";
 import PluginDetail from "./PluginDetail.vue";
 import { usePluginsStore, type LoadedPlugin } from "@/stores/plugins";
 
@@ -63,4 +64,10 @@ describe("plugin details",()=>{
     expect(wrapper.find(".pd__primary").text()).toBe("打开");
     wrapper.unmount();
   });
+});
+
+it("shows installed-to-catalog versions and routes the update action through the catalog",async()=>{
+ const plugin={manifest:{name:"mytools-search",version:"0.1.0",description:"search",main:"index.html",features:[{code:"run",explain:"运行",cmds:[]}]},enabled:true,origin:"custom",declaredCapabilities:[],dir:"fixture",mainUrl:"https://example.com/index.html"} as LoadedPlugin;
+ const {wrapper}=await setup("mytools-search",plugin);const catalog=useToolCatalogStore();const existing=catalog.entries.find(e=>e.name==="mytools-search")!;catalog.entries=catalog.entries.map(e=>e.name===existing.name?{...e,version:"0.2.0",status:"ready" as const,npmSpec:e.npm+"@0.2.0"}:e);await flushPromises();
+ expect(wrapper.text()).toContain("可更新");expect(wrapper.text()).toContain("0.1.0");const button=wrapper.findAll("button").find(b=>b.text()==="更新至 v0.2.0")!;expect(button).toBeDefined();const install=vi.spyOn(catalog,"install").mockResolvedValue("mytools-search");await button.trigger("click");expect(install).toHaveBeenCalledWith(expect.objectContaining({name:"mytools-search",version:"0.2.0"}));wrapper.unmount();
 });

@@ -42,6 +42,8 @@ pub struct AppSettings {
     /// Custom plugin directory. `None` means "use the platform default".
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub plugin_root: Option<String>,
+    #[serde(default = "crate::services::catalog::default_sources")]
+    pub catalog_sources: crate::services::catalog::CatalogSources,
     #[serde(default = "default_true")]
     pub tray_enabled: bool,
     #[serde(default)]
@@ -84,6 +86,7 @@ impl Default for AppSettings {
     fn default() -> Self {
         Self {
             plugin_root: None,
+            catalog_sources: crate::services::catalog::default_sources(),
             tray_enabled: true,
             floatball_enabled: false,
             middle_panel_enabled: true,
@@ -123,6 +126,11 @@ impl Clone for SettingsState {
 }
 
 impl SettingsState {
+    pub fn set_catalog_sources(&self, sources: crate::services::catalog::CatalogSources) -> Result<(), String> {
+        sources.validate()?;
+        self.inner.write().map_err(|e| e.to_string())?.catalog_sources = sources;
+        self.save()
+    }
     pub fn set_middle_panel_enabled(&self, enabled: bool) -> Result<(), String> {
         let mut settings = self.inner.write().map_err(|e| e.to_string())?;
         settings.middle_panel_enabled = enabled;

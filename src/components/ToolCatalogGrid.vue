@@ -23,6 +23,7 @@ const tabs = computed(() => [
 
 function statusLabel(entry: ToolEntry): string {
   const state = store.stateOf(entry);
+  if (state === "updateable") return "可更新";
   if (state === "installed") return "已安装";
   if (state === "builtin") return "已内置";
   if (state === "installable") return "可安装";
@@ -32,7 +33,7 @@ function statusLabel(entry: ToolEntry): string {
 function statusClass(entry: ToolEntry): string {
   const state = store.stateOf(entry);
   if (state === "installed") return "tc__badge--ok";
-  if (state === "installable") return "tc__badge--accent";
+  if (state === "installable" || state === "updateable") return "tc__badge--accent";
   return "tc__badge--dim";
 }
 
@@ -52,7 +53,8 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
         spellcheck="false"
         placeholder="搜索工具…"
       />
-      <button class="tc__btn" :disabled="store.loading" @click="store.refresh(true)">{{ store.loading ? '更新中…' : '刷新目录' }}</button>
+      <button class="tc__btn" :disabled="store.loading" @click="store.refresh(true)">{{ store.loading ? '更新中…' : '检查更新' }}</button>
+      <button v-if="store.updates.length" class="tc__btn" :disabled="!!store.busy || store.updatingAll" @click="store.updateAll()">{{ store.updatingAll ? '更新中…' : `全部更新（${store.updates.length}）` }}</button>
     </div>
     <TopTabNav v-model="store.category as unknown as string" :tabs="tabs" />
     <p v-if="store.loadError" class="tc__banner" role="status">{{ store.loadError }}</p>
@@ -76,7 +78,7 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
           />
           <div class="tc__title-wrap">
             <h3 class="tc__title">{{ entry.title }}</h3>
-            <p class="tc__meta">{{ entry.category }} · v{{ entry.version }}</p>
+            <p class="tc__meta">{{ entry.category }} · <template v-if="store.canUpdate(entry)">v{{ store.installedVersion(entry.name) }} → </template>v{{ entry.version }}</p>
           </div>
           <span class="tc__badge" :class="statusClass(entry)">
             {{ statusLabel(entry) }}
@@ -88,12 +90,12 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
         <footer class="tc__foot">
           <span class="tc__ref">查看详情 →</span>
           <button
-            v-if="store.stateOf(entry) === 'installable'"
+            v-if="['installable','updateable'].includes(store.stateOf(entry))"
             class="tc__btn tc__btn--primary"
             :disabled="!!store.busy"
             @click.stop="onInstall(entry)"
           >
-            {{ store.busy === entry.name ? "安装中…" : "安装" }}
+            {{ store.busy === entry.name ? "处理中…" : store.canUpdate(entry) ? "更新" : "安装" }}
           </button>
           <span v-else-if="store.stateOf(entry) === 'installed'" class="tc__state">
             在「已安装」中打开

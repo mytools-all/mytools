@@ -25,7 +25,7 @@ const installed=computed(()=>plugins.plugins.find(p=>p.manifest.name===props.nam
 const title=computed(()=>entry.value?.title || (installed.value ? pluginDisplayName(installed.value.manifest) : props.name));
 const features=computed(()=>entry.value?.features || installed.value?.manifest.features.map(f=>f.explain || f.code) || []);
 const capabilities=computed(()=>installed.value?.declaredCapabilities || entry.value?.capabilities || []);
-const status=computed(()=>installed.value ? installed.value.incompatible ? "不兼容" : installed.value.enabled ? "已安装" : "已停用" : entry.value?.status==='builtin' ? "随应用内置" : entry.value?.status==='ready' ? "可安装" : "开发中");
+const status=computed(()=>entry.value && catalog.canUpdate(entry.value) ? "可更新" : installed.value ? installed.value.incompatible ? "不兼容" : installed.value.enabled ? "已安装" : "已停用" : entry.value?.status==='builtin' ? "随应用内置" : entry.value?.status==='ready' ? "可安装" : "开发中");
 const notes=computed(()=>entry.value?.notes.length ? entry.value.notes : ["安装后点击“打开”进入插件，也可从主页搜索启动。","涉及真实文件、剪贴板或网络的功能按能力声明申请授权。"]);
 function back(){const query={...route.query};delete query.detail;void router.push({path:"/plugins",query});}
 async function run(action:()=>Promise<unknown>){pending.value=true;error.value="";try{await action();}catch(e){error.value=String(e);}finally{pending.value=false;}}
@@ -42,15 +42,16 @@ function safeUrl(url?:string){try{const parsed=new URL(url || "");return ["https
         <img :src="installed?.icon || entry?.icon || fallbackIconDataUri(title)" :alt="title" />
         <div class="pd__heading"><h1>{{ title }}</h1><p>{{ entry?.description || installed?.manifest.description }}</p><span>{{ status }} · v{{ installed?.manifest.version || entry?.version }}<template v-if="entry"> · {{ entry.category }}</template></span></div>
         <div class="pd__actions">
+          <button v-if="entry && catalog.canUpdate(entry)" class="pd__primary" :disabled="!!catalog.busy" @click="catalog.install(entry)">{{ catalog.busy===name?'更新中…':`更新至 v${entry.version}` }}</button>
           <button v-if="installed" class="pd__primary" :disabled="!installed.enabled || !!installed.incompatible || !installed.manifest.features.length" @click="openPlugin">打开</button>
           <button v-else-if="entry?.status === 'ready'" class="pd__primary" :disabled="catalog.busy === name" @click="catalog.install(entry)">{{ catalog.busy === name ? '安装中…' : '安装' }}</button>
-          <button v-if="installed" :disabled="pending" @click="run(()=>plugins.setEnabled(name,!installed?.enabled))">{{ installed.enabled ? '停用' : '启用' }}</button>
-          <button v-if="installed" :disabled="pending" @click="run(()=>plugins.openDir(name))">打开目录</button>
-          <button v-if="installed" class="pd__uninstall" :disabled="pending" @click="confirmUninstall=true">卸载</button>
+          <button v-if="installed" :disabled="pending || !!catalog.busy" @click="run(()=>plugins.setEnabled(name,!installed?.enabled))">{{ installed.enabled ? '停用' : '启用' }}</button>
+          <button v-if="installed" :disabled="pending || !!catalog.busy" @click="run(()=>plugins.openDir(name))">打开目录</button>
+          <button v-if="installed" class="pd__uninstall" :disabled="pending || !!catalog.busy" @click="confirmUninstall=true">卸载</button>
         </div>
       </header>
-      <div v-if="confirmUninstall && installed" class="pd__confirm" role="group" aria-label="确认卸载插件"><p>确认卸载 {{ title }}？只移除插件程序，保留插件存储的数据。</p><button :disabled="pending" @click="confirmUninstall=false">取消</button><button class="pd__uninstall" :disabled="pending" @click="uninstallPlugin">{{ pending ? '卸载中…' : '确认卸载' }}</button></div>
-      <p v-if="notice" role="status">{{ notice }}</p>
+      <div v-if="confirmUninstall && installed" class="pd__confirm" role="group" aria-label="确认卸载插件"><p>确认卸载 {{ title }}？只移除插件程序，保留插件存储的数据。</p><button :disabled="pending || !!catalog.busy" @click="confirmUninstall=false">取消</button><button class="pd__uninstall" :disabled="pending || !!catalog.busy" @click="uninstallPlugin">{{ pending ? '卸载中…' : '确认卸载' }}</button></div>
+      <p v-if="notice || catalog.notice" role="status">{{ notice || catalog.notice }}</p>
       <p v-if="error || catalog.error" class="pd__error" role="alert">{{ error || catalog.error }}</p>
       <p v-if="installed?.incompatible" class="pd__error">{{ installed.incompatible }}</p>
       <div class="pd__layout">
@@ -60,7 +61,7 @@ function safeUrl(url?:string){try{const parsed=new URL(url || "");return ["https
         <section v-if="installed?.manifest.features.length"><h2>启动关键词</h2><div v-for="feature in installed.manifest.features" :key="feature.code" class="pd__keywords"><strong>{{ feature.explain || feature.code }}</strong><span v-for="word in feature.cmds" :key="word">{{ word }}</span></div></section>
         <section><h2>权限与数据</h2><p v-if="!capabilities.length">未提供能力声明，请留意运行时的授权提示。</p><p v-else>以下能力由宿主统一管理；需要确认的操作会在使用时请求授权。</p><div class="pd__caps"><code v-for="cap in capabilities" :key="cap">{{ cap }}</code></div></section>
       </div><aside class="pd__info">
-        <section><h2>插件信息</h2><dl><dt>包标识</dt><dd>{{ name }}</dd><dt>版本</dt><dd>{{ installed?.manifest.version || entry?.version }}</dd><dt v-if="entry?.author || installed?.manifest.author">作者</dt><dd v-if="entry?.author || installed?.manifest.author">{{ entry?.author || installed?.manifest.author }}</dd><dt v-if="entry">npm 包</dt><dd v-if="entry">{{ entry.npm }}</dd><dt v-if="entry">许可证</dt><dd v-if="entry">{{ entry.license }}</dd><dt>来源</dt><dd>{{ installed?.origin === 'official' ? '随应用提供' : entry ? '独立工具包' : '已安装插件' }}</dd></dl></section>
+        <section><h2>插件信息</h2><dl><dt>包标识</dt><dd>{{ name }}</dd><dt>已安装版本</dt><dd>{{ installed?.manifest.version || '未安装' }}</dd><dt v-if="entry">仓库版本</dt><dd v-if="entry">{{ entry.version }}{{ entry.status==='planned'?'（未发布）':'' }}</dd><dt v-if="entry?.author || installed?.manifest.author">作者</dt><dd v-if="entry?.author || installed?.manifest.author">{{ entry?.author || installed?.manifest.author }}</dd><dt v-if="entry">npm 包</dt><dd v-if="entry">{{ entry.npm }}</dd><dt v-if="entry">许可证</dt><dd v-if="entry">{{ entry.license }}</dd><dt>来源</dt><dd>{{ installed?.origin === 'official' ? '随应用提供' : entry ? '独立工具包' : '已安装插件' }}</dd></dl></section>
         <section v-if="entry"><h2>安装与分发</h2><p v-if="entry.status === 'builtin'">随应用提供，无需单独安装。</p><template v-else><p>通过 npm 安装独立插件包，自动安装到统一的插件根目录，无需为每个插件选择位置。</p><p>拿到插件目录 / zip / tgz 后，可在“开发者”中安装。复制目录本身不会自动升级现有安装。</p></template></section>
         <section v-if="entry || safeUrl(installed?.manifest.homePage)"><h2>相关链接</h2><a v-if="entry" :href="entry.repository" target="_blank" rel="noopener noreferrer">插件仓库 ↗</a><a v-if="entry" :href="'https://www.npmjs.com/package/'+entry.npm" target="_blank" rel="noopener noreferrer">npm 包 ↗</a><a v-if="safeUrl(installed?.manifest.homePage)" :href="safeUrl(installed?.manifest.homePage)" target="_blank" rel="noopener noreferrer">作者主页 ↗</a><a v-if="entry?.reference" :href="safeUrl(entry.reference.url)" target="_blank" rel="noopener noreferrer">交互参考：{{ entry.reference.label }} ↗</a><p v-if="entry?.reference" class="pd__muted">参考来源仅用于交互设计，不是本插件的运行依赖。</p></section>
       </aside>

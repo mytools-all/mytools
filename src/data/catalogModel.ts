@@ -1,5 +1,6 @@
 export type ToolStatus = "builtin" | "ready" | "planned";
-export const CATALOG_URL = "https://raw.githubusercontent.com/mytools-all/mytools-home/main/plugins/database.json";
+import catalogDefaults from "../config/catalog.json" with { type: "json" };
+export const CATALOG_URL = catalogDefaults.pluginList;
 
 export interface ToolReference {
   package: string;

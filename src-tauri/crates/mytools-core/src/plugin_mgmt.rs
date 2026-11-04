@@ -431,7 +431,12 @@ pub fn install_from_tar_gz(tar_path: &Path, root: &Path) -> Result<String, Plugi
     let staging = staging_guard.path().to_path_buf();
     let result = (|| -> Result<String, PluginMgrError> {
         let mut count = 0usize;
-        for mut entry in archive.entries()?.filter_map(Result::ok) {
+        for entry in archive.entries()? {
+            let mut entry = entry?;
+            let kind = entry.header().entry_type();
+            if !kind.is_file() && !kind.is_dir() {
+                return Err(PluginMgrError::UnsafeEntry("tar links and special files are not supported".into()));
+            }
             count += 1;
             if count > MAX_ARCHIVE_ENTRIES {
                 return Err(PluginMgrError::Archive("too many entries".into()));
@@ -466,6 +471,55 @@ pub fn install_from_tar_gz(tar_path: &Path, root: &Path) -> Result<String, Plugi
         let _ = fs::remove_dir_all(&staging);
     }
     result
+}
+
+pub fn update_from_tar_gz(
+    pack: &Path, root: &Path, name: &str, from_version: &str, version: &str,
+) -> Result<String, PluginMgrError> {
+    let dest = safe_plugin_dir(root, name)?;
+    if fs::symlink_metadata(&dest)?.file_type().is_symlink() {
+        return Err(PluginMgrError::UnsafeEntry(name.into()));
+    }
+    let previous = read_manifest(&dest)?;
+    if previous.version != from_version {
+        return Err(PluginMgrError::Archive("插件版本已变化，请重新检查更新".into()));
+    }
+    let staging = staging_dir(root)?;
+    let installed = install_from_tar_gz(pack, staging.path())?;
+    if installed != name {
+        return Err(PluginMgrError::Archive("更新包身份与已安装插件不一致".into()));
+    }
+    let candidate = staging.path().join(name);
+    let manifest = read_manifest(&candidate)?;
+    if manifest.version != version {
+        return Err(PluginMgrError::Archive("更新包版本与请求版本不一致".into()));
+    }
+    let entry = candidate.join(&manifest.main).canonicalize()?;
+    if !entry.starts_with(candidate.canonicalize()?) || !entry.is_file() {
+        return Err(PluginMgrError::UnsafeEntry(manifest.main));
+    }
+    let backup_root = staging_dir(staging.path())?.keep();
+    let backup = backup_root.join("previous");
+    if let Err(error) = replace_update(&candidate, &dest, &backup, || fs::rename(&candidate, &dest)) {
+        if backup.exists() {
+            let recovery = staging.keep();
+            return Err(PluginMgrError::Archive(format!("{error}；旧版保留于 {}", recovery.display())));
+        }
+        return Err(error);
+    }
+    Ok(name.into())
+}
+
+fn replace_update(
+    _candidate: &Path, dest: &Path, backup: &Path,
+    activate: impl FnOnce() -> std::io::Result<()>,
+) -> Result<(), PluginMgrError> {
+    fs::rename(dest, backup)?;
+    if let Err(error) = activate() {
+        fs::rename(backup, dest).map_err(|rollback| PluginMgrError::Archive(format!("更新失败：{error}；恢复失败：{rollback}")))?;
+        return Err(error.into());
+    }
+    Ok(())
 }
 
 fn staging_dir(root: &Path) -> Result<tempfile::TempDir, PluginMgrError> {
@@ -923,5 +977,56 @@ mod tests {
         assert!(origins.forget("a"));
         assert!(!origins.forget("a"));
         assert_eq!(origins.names(), vec!["b".to_string()]);
+    }
+}
+
+#[cfg(test)]
+mod update_tests {
+    use super::*;
+    fn write_pack(path: &Path, name: &str, version: &str, entry: bool) {
+        let file=fs::File::create(path).unwrap();
+        let encoder=flate2::write::GzEncoder::new(file,flate2::Compression::default());
+        let mut builder=tar::Builder::new(encoder);
+        let manifest=serde_json::json!({"name":name,"description":"test","version":version,"main":"index.html"}).to_string();
+        let mut entries=vec![("package/plugin.json",manifest.as_bytes())];
+        if entry {entries.push(("package/index.html",b"new version"));}
+        for (name,body) in entries {
+            let mut header=tar::Header::new_gnu();header.set_size(body.len() as u64);header.set_mode(0o644);header.set_cksum();
+            builder.append_data(&mut header,name,body).unwrap();
+        }
+        builder.into_inner().unwrap().finish().unwrap();
+    }
+    fn installed(root: &Path) {
+        let dir=root.join("demo");fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("plugin.json"),r#"{"name":"demo","description":"old","version":"0.1.0","main":"index.html"}"#).unwrap();
+        fs::write(dir.join("index.html"),"old version").unwrap();
+    }
+    #[test]
+    fn update_validated_package_preserves_external_storage() {
+        let temp=tempfile::tempdir().unwrap();let root=temp.path().join("plugins");installed(&root);
+        let storage=temp.path().join("storage.json");fs::write(&storage,"user data").unwrap();
+        let pack=temp.path().join("update.tgz");write_pack(&pack,"demo","0.2.0",true);
+        update_from_tar_gz(&pack,&root,"demo","0.1.0","0.2.0").unwrap();
+        assert_eq!(fs::read_to_string(root.join("demo/index.html")).unwrap(),"new version");
+        assert_eq!(fs::read_to_string(storage).unwrap(),"user data");
+        assert_eq!(fs::read_dir(root).unwrap().count(),1);
+    }
+    #[test]
+    fn bad_identity_version_entry_or_archive_never_replaces_old_plugin() {
+        let temp=tempfile::tempdir().unwrap();let root=temp.path().join("plugins");installed(&root);
+        let pack=temp.path().join("update.tgz");
+        for (name,version,entry,from) in [("other","0.2.0",true,"0.1.0"),("demo","0.3.0",true,"0.1.0"),("demo","0.2.0",false,"0.1.0"),("demo","0.2.0",true,"0.0.9")] {
+            write_pack(&pack,name,version,entry);
+            assert!(update_from_tar_gz(&pack,&root,"demo",from,"0.2.0").is_err());
+            assert_eq!(fs::read_to_string(root.join("demo/index.html")).unwrap(),"old version");
+        }
+        fs::write(&pack,"not gzip").unwrap();assert!(update_from_tar_gz(&pack,&root,"demo","0.1.0","0.2.0").is_err());
+    }
+    #[test]
+    fn failed_activation_restores_the_old_directory() {
+        let temp=tempfile::tempdir().unwrap();let dest=temp.path().join("demo");let backup=temp.path().join("backup");let candidate=temp.path().join("candidate");
+        fs::create_dir(&dest).unwrap();fs::write(dest.join("index.html"),"old version").unwrap();
+        let result=replace_update(&candidate,&dest,&backup,||Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied,"simulated locked directory")));
+        assert!(result.is_err());assert!(!backup.exists());assert_eq!(fs::read_to_string(dest.join("index.html")).unwrap(),"old version");
     }
 }

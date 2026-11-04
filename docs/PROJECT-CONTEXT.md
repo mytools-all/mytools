@@ -15,6 +15,9 @@ MyTools 是 Windows 插件工具箱，宿主 Tauri 2 + Vue 3 / TypeScript + Pini
 | src/App.vue、composables/useAppShell.ts | 窗口壳、初始化和桌面事件 |
 | src/runtime、composables/pluginBridge.ts | 插件生命周期、消息、错误、授权队列 |
 | src/stores、views、components | 界面与状态 |
+| src/views/PluginManagerView.vue | 插件中心导航、详情抽屉与宿主窗口布局 |
+| src/views/plugin-center | 商店、已安装、开发者、偏好设置四个独立页面与公共样式；KeepAlive 保留切页状态 |
+| src/config/app.ts | 应用基本信息统一读取入口，供“关于”等界面使用，与用户偏好 store 分离 |
 | src-tauri/src/bootstrap.rs | 装配 |
 | src-tauri/src/commands | Tauri IPC 和窗口适配 |
 | src-tauri/src/runtime | 会话、身份、能力调度、启动上下文 |
@@ -54,8 +57,24 @@ pnpm dev:install:debug 会重建、替换并重启本机安装版本，验收前
 
 ## 修改与交接
 
+应用基本信息维护位置：package.json 中的 version、description、author、repository、homepage、bugs、license；产品名和应用标识在 src-tauri/tauri.conf.json。Tauri 的 version 引用 ../package.json，因此界面与安装包共用应用版本号；src/config/app.ts 组装只读 APP_INFO，页面不重复填写这些值。支持平台的展示文案也在该入口维护。Cargo.toml 的 crate 版本仍是 Rust 包元数据，发布调整时独立检查，不作为“关于”页面版本来源。修改基本信息后需重新构建应用；它不是用户运行时设置。
+
 架构详细说明见 02-architecture.md，完整能力目录见 04-plugin-spec.md，面板见 13-launch-context.md。面向新插件作者只需插件开发指南和 demo，不需要读宿主实现。新能力需先定义参数、返回、权限和测试；普通插件功能不改宿主。
 
 每次交接更新本次改动、运行过的检查、未解决问题和发布状态，避免写机器临时 PID/端口或依赖聊天记录。已有未提交修改应先用 git status / git diff 确认，不能整体覆盖。
 
 离线整理尚未推送的本地索引时，可在宿主目录执行 `pnpm catalog:sync --file ../plugins/database.json`，与远程同步使用相同的字段校验；无参数仍读取远程索引。
+
+## 插件目录主仓库与镜像
+
+默认地址统一维护在 `src/config/catalog.json` 的 `pluginList`、`pluginListMirror`，由 `APP_INFO` 暴露，Rust 同时嵌入同一文件。GitHub 主仓库与 Gitee 镜像均指向 mytools-all/mytools-home 的 main/plugins/database.json。
+
+偏好设置 → 插件顶部可编辑、恢复默认地址并保存刷新；用户覆盖值持久化在 settings.json 的 catalogSources 中，“关于”末尾展示当前配置的两行地址。每次目录刷新先访问主仓库，请求失败或目录校验失败后尝试镜像，成功地址显示为当前使用仓库；后续刷新仍优先主仓库。两者失败保留已有缓存或内置快照，不安装来自无效索引的数据。仅支持不携带账号密码的 HTTPS 地址；修改目录源不会更改 npm 下载源或插件安装位置。
+
+## 插件更新与本地发现
+
+商店、详情和已安装页比较索引版本与已安装清单版本，按 SemVer 排序，仅对已发布、可安装且更高的版本显示“可更新”。相同版本、较旧版本、无效版本、published:false 均不提供 npm 更新。已安装页提供“检查更新 / 重新扫描”、可更新筛选和顺序批量更新；首次进入也扫描安装目录，保证新放入的独立插件能够出现。本地源码插件必须安装到实际插件根目录，不能只改工作区。
+
+plugin_update_npm 下载固定版本后，由 core 更新事务在插件根内暂存并校验插件身份、目标版本、当前版本与入口路径，再通过目录替换更新。普通激活失败恢复旧目录；恢复失败则保留旧目录并返回恢复路径。更新不卸载插件、不删除 storage 或文件沙箱，保留启停状态；运行时已有版本变化监听会重建插件实例。安装/更新/卸载及设置目录操作串行。批量更新继续处理后续插件并报告失败项。源码与安装包更新不等于 npm 发布；只有发布新版并更新 database.json 后，其他用户才会获得新版提示。
+
+本次本地验证：309 项前端测试、163 项宿主 Rust 测试、125 项 core 测试通过（4 项原有忽略），类型检查、前端 lint（0 错误，13 项既有警告）、clippy 和 Tauri 发布构建通过。已部署本机，实际 WebView2 验证主页搜索打开打卡、已安装页发现打卡/更新入口、打卡设置侧栏和日历标签管理窗口；未操作用户记录。日历 36 项、打卡 17 项独立测试通过。真实 npm 新版本更新、失败场景的原生 UI 端到端操作仍未验收；身份/版本拒绝和失败恢复已由原生文件系统单元测试覆盖。未推送或发布。

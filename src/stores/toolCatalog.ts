@@ -1,3 +1,5 @@
+import { comparePluginVersions } from "@/lib/pluginVersion";
+import { useCatalogSourcesStore } from "@/stores/catalogSources";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
@@ -9,10 +11,11 @@ import {
   type ToolEntry,
 } from "@/data/toolCatalog";
 
-export type ToolInstallState = "installed" | "builtin" | "installable" | "planned";
+export type ToolInstallState = "installed" | "updateable" | "builtin" | "installable" | "planned";
 
 export const useToolCatalogStore = defineStore("toolCatalog", () => {
   const plugins = usePluginsStore();
+  const sources = useCatalogSourcesStore();
   const entries = ref<ToolEntry[]>(TOOL_CATALOG);
   const loading = ref(false);
   const loadError = ref<string | null>(null);
@@ -40,8 +43,19 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
     loadError.value = null;
     refreshPromise = (async () => {
       try {
-        const index = await invoke<unknown>("plugin_catalog_fetch");
-        const parsed = parseToolCatalog(index);
+        await sources.load();
+        let index: unknown;
+        let parsed: ToolEntry[] | undefined;
+        const failures: string[] = [];
+        for (const url of new Set([sources.pluginList, sources.pluginListMirror])) {
+          try {
+            index = await invoke<unknown>("plugin_catalog_fetch", { url });
+            parsed = parseToolCatalog(index);
+            sources.activeUrl = url;
+            break;
+          } catch (reason) { failures.push(`${url}：${String(reason)}`); }
+        }
+        if (!parsed) throw Error(failures.join("；"));
         entries.value = parsed;
         source.value = "remote";
         if (category.value !== "all" && !parsed.some(entry => entry.category === category.value)) category.value = "all";
@@ -60,7 +74,24 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
     () => new Set(plugins.plugins.map((p) => p.manifest.name)),
   );
 
+  function installedVersion(name: string) { return plugins.plugins.find(p=>p.manifest.name===name)?.manifest.version; }
+  function canUpdate(entry: ToolEntry) {
+    const current=installedVersion(entry.name);
+    return !!current && entry.status==="ready" && !!entry.npmSpec && comparePluginVersions(entry.version,current)===1;
+  }
+  const updates=computed(()=>entries.value.filter(canUpdate));
+  const updatingAll=ref(false);
+  async function updateAll() {
+    if(updatingAll.value||busy.value)return;
+    updatingAll.value=true;
+    const failures:string[]=[];let count=0;
+    try {
+      for(const entry of [...updates.value]) { if(await install(entry))count++;else failures.push(entry.title); }
+      notice.value=`已更新 ${count} 个插件${failures.length?`，失败 ${failures.length} 个：${failures.join("、")}`:""}`;
+    } finally { updatingAll.value=false; }
+  }
   function stateOf(entry: ToolEntry): ToolInstallState {
+    if (canUpdate(entry)) return "updateable";
     if (installedNames.value.has(entry.name)) return "installed";
     if (entry.status === "builtin") return "builtin";
     if (entry.status === "ready") return "installable";
@@ -99,13 +130,18 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
       error.value = "索引未提供可安装的 npm 包";
       return null;
     }
+    const previous=installedVersion(entry.name);
+    const updating=!!previous;
+    if(updating && !canUpdate(entry)) { error.value="没有可更新的已发布版本"; return null; }
     busy.value = entry.name;
     error.value = null;
     notice.value = null;
     try {
-      const name = await invoke<string>("plugin_install_npm", { spec: entry.npmSpec });
+      const name = updating
+        ? await invoke<string>("plugin_update_npm", { spec:entry.npmSpec,code:entry.name,fromVersion:previous,version:entry.version })
+        : await invoke<string>("plugin_install_npm", { spec: entry.npmSpec });
       await plugins.refresh();
-      notice.value = `已安装 ${entry.title}`;
+      notice.value = `${updating?"已更新":"已安装"} ${entry.title}${updating?` 至 v${entry.version}`:""}`;
       return name;
     } catch (e) {
       error.value = String(e);
@@ -126,6 +162,11 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
     installedNames,
     visibleEntries,
     stateOf,
+    installedVersion,
+    canUpdate,
+    updates,
+    updateAll,
+    updatingAll,
     install,
     refresh,
     loading,

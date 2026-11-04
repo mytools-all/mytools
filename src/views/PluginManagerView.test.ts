@@ -177,6 +177,67 @@ describe("PluginManagerView (插件中心)", () => {
     });
   });
 
+  it("preserves the installed filter and developer draft while switching pages", async () => {
+    pluginListOverride = pluginFixture();
+    pluginListOverride[1]!.enabled = false;
+    const {wrapper} = await mountView("installed");
+    await wrapper.findAll(".ttn__tab").find(tab => tab.text().includes("已停用"))!.trigger("click");
+    expect(wrapper.findAll(".pc__iitem")).toHaveLength(1);
+    await wrapper.get('[data-section="dev"]').trigger("click");
+    await flushPromises();
+    await wrapper.get(".pc__search-input").setValue("@mytools-all/mytools-demo@0.1.1");
+    await wrapper.get('[data-section="installed"]').trigger("click");
+    await flushPromises();
+    expect(wrapper.get(".ttn__tab--active").text()).toContain("已停用");
+    expect(wrapper.get(".pc__iitem").text()).toContain("Demo Hello");
+    await wrapper.get('[data-section="dev"]').trigger("click");
+    await flushPromises();
+    expect((wrapper.get(".pc__search-input").element as HTMLInputElement).value).toBe("@mytools-all/mytools-demo@0.1.1");
+    wrapper.unmount();
+  });
+
+  it("loads permissions only when preferences is first visited", async () => {
+    const {wrapper} = await mountView("store");
+    expect(invokeMock).not.toHaveBeenCalledWith("plugin_capability_grants", undefined);
+    expect(invokeMock).not.toHaveBeenCalledWith("dir_grants_list", undefined);
+    await wrapper.get('[data-section="settings"]').trigger("click");
+    await flushPromises();
+    expect(invokeMock.mock.calls.filter(([command]) => command === "plugin_capability_grants")).toHaveLength(1);
+    expect(invokeMock.mock.calls.filter(([command]) => command === "dir_grants_list")).toHaveLength(1);
+    await wrapper.get('[data-section="store"]').trigger("click");
+    await flushPromises();
+    await wrapper.get('[data-section="settings"]').trigger("click");
+    await flushPromises();
+    expect(invokeMock.mock.calls.filter(([command]) => command === "plugin_capability_grants")).toHaveLength(1);
+    wrapper.unmount();
+  });
+
+  it("opens plugins in their own window when the center is detached", async () => {
+    detached = true;
+    const {wrapper,router} = await mountView("installed");
+    await wrapper.findAll(".pc__iactions .pc__btn").find(button => button.text() === "打开")!.trigger("click");
+    await flushPromises();
+    expect(invokeMock).toHaveBeenCalledWith("plugin_open_window", {pluginId:"mytools-calc",feature:"calc"});
+    expect(router.currentRoute.value.path).toBe("/plugins");
+    expect(invokeMock.mock.calls.some(([command]) => command === "window_set_layout")).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("opens and closes the detail drawer from the installed page", async () => {
+    const {wrapper,router} = await mountView("installed");
+    await wrapper.get(".pc__iitem").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.detail).toBe("mytools-calc");
+    expect(wrapper.get(".pc").attributes("aria-hidden")).toBe("true");
+    const close = document.querySelector<HTMLButtonElement>('[aria-label="关闭插件详情"]');
+    expect(close).not.toBeNull();
+    close!.click();
+    await flushPromises();
+    expect(router.currentRoute.value.query.detail).toBeUndefined();
+    expect(wrapper.get(".pc").attributes("aria-hidden")).toBeUndefined();
+    wrapper.unmount();
+  });
+
   it("lists directory grants in the settings section", async () => {
     dirGrantsOverride = [{ plugin: "mytools-calc", path: "C:\\work" }];
     const { wrapper } = await mountView("settings");

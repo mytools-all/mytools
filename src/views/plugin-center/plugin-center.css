@@ -1,0 +1,162 @@
+.pc__page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pc__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pc__search-input {
+  flex: 0 0 auto;
+  height: 36px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-control-border);
+  background: transparent;
+  color: var(--panel-fg);
+  font-size: 13px;
+  outline: none;
+}
+
+.pc__row > .pc__search-input { flex:1 1 0; width:auto; }
+
+.pc__search-input:focus {
+  border-color: var(--accent);
+}
+
+.pc__btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-control-border);
+  background: transparent;
+  color: var(--panel-fg);
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.pc__btn:hover:not(:disabled) {
+  background: var(--hover-bg);
+}
+
+.pc__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pc__btn--primary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pc__btn--danger {
+  border-color: rgba(224, 108, 117, 0.5);
+  color: #e06c75;
+}
+
+.pc__row--wrap {
+  flex-wrap: wrap;
+}
+
+.pc__hotkey {
+  flex: 1;
+  max-width: 280px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-control-border);
+  background: transparent;
+  color: var(--panel-fg);
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+  font-size: 13px;
+  outline: none;
+}
+
+.pc__hotkey:focus {
+  border-color: var(--accent);
+}
+
+.pc__root {
+  max-width: none;
+  color: var(--text-dim);
+}
+
+.pc__text {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.pc__hint {
+  font-size: 11px;
+  color: var(--text-dim-strong);
+  margin-left: auto;
+}
+
+.pc__status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim-strong);
+}
+
+.pc__status--ok {
+  color: var(--accent);
+}
+
+.pc__message {
+  margin: 0;
+  font-size: 12px;
+  color: #e06c75;
+}
+
+.pc__link {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pc__link:hover {
+  text-decoration: underline;
+}
+
+.pc__error {
+  margin: 0;
+  font-size: 12px;
+  color: #e06c75;
+}
+
+.pc__notice {
+  margin: 0;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.pc__side-h {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pc__root {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-dim-strong);
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

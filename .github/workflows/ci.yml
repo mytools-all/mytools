@@ -27,11 +27,17 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Driver version regression
+        run: node --test scripts/webview2-runtime.test.mjs
+
       - name: Lint
         run: pnpm lint:frontend
 
       - name: Type-check
-        run: pnpm type-check
+        run: |
+          pnpm type-check
+          if ($LASTEXITCODE -ne 0) { throw "Frontend type check failed" }
+          pnpm type-check:e2e
 
       - name: Test + coverage gate
         run: pnpm test:coverage
@@ -176,21 +182,41 @@ jobs:
           path: dist
 
       - name: Install drivers
+        id: drivers
         run: |
           cargo install tauri-driver --locked
-          $edge = Get-Item "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
-          $version = $edge.VersionInfo.ProductVersion
-          Invoke-WebRequest "https://msedgedriver.microsoft.com/$version/edgedriver_win64.zip" -OutFile driver.zip
-          Expand-Archive driver.zip -DestinationPath driver
-          (Resolve-Path driver).Path >> $env:GITHUB_PATH
+          if ($LASTEXITCODE -ne 0) { throw "tauri-driver installation failed" }
+          $driver = & ./scripts/setup-e2e-driver.ps1 -ApplicationPath ./dist/mytools.exe -DriverDirectory ./driver
+          "native_driver=$driver" >> $env:GITHUB_OUTPUT
 
       - run: pnpm install --frozen-lockfile
 
       - name: Run smoke tests
         env:
           MYTOOLS_E2E_EXE: ${{ github.workspace }}\dist\mytools.exe
+          MYTOOLS_E2E_ARTIFACTS: ${{ github.workspace }}\e2e-artifacts
         run: |
           $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=0"
-          Start-Process tauri-driver -ArgumentList "--port","4440","--native-port","4441" -WindowStyle Hidden -PassThru | Out-Null
-          Start-Sleep -Seconds 5
-          pnpm test:e2e
+          $env:WEBVIEW2_USER_DATA_FOLDER = Join-Path $env:RUNNER_TEMP "mytools-e2e-profile"
+          New-Item -ItemType Directory -Force e2e-artifacts | Out-Null
+          $driver = Start-Process tauri-driver -ArgumentList '--port','4440','--native-port','4441','--native-driver','"${{ steps.drivers.outputs.native_driver }}"' -RedirectStandardOutput e2e-artifacts/tauri-driver.log -RedirectStandardError e2e-artifacts/tauri-driver-error.log -WindowStyle Hidden -PassThru
+          try {
+            $ready = $false
+            for ($attempt = 0; $attempt -lt 40; $attempt++) {
+              if ($driver.HasExited) { throw "tauri-driver exited before becoming ready" }
+              try { Invoke-RestMethod http://127.0.0.1:4440/status -NoProxy -TimeoutSec 1 | Out-Null; $ready = $true; break } catch { Start-Sleep -Milliseconds 250 }
+            }
+            if (-not $ready) { throw "tauri-driver readiness timed out" }
+            pnpm test:e2e
+            if ($LASTEXITCODE -ne 0) { throw "E2E smoke failed (exit $LASTEXITCODE)" }
+          } finally {
+            if (-not $driver.HasExited) { Stop-Process -Id $driver.Id -Force }
+          }
+
+      - name: Upload E2E diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-diagnostics
+          path: e2e-artifacts/
+          retention-days: 7

@@ -145,3 +145,9 @@ mytools-home/plugins/database.json 中添加 schemaVersion 2 的条目，至少�
 交付包含 README（功能、安装、权限、数据与限制）、LICENSE、测试和实际验证记录。对文档驱动开发，先记录所用文档版本，再按文档实现；发现缺项先修文档，重新验证。结果见 [日历验证记录](validation-calendar.md)。
 
 离线整理尚未推送的本地索引时，可在宿主目录执行 `pnpm catalog:sync --file ../plugins/database.json`，与远程同步使用相同的字段校验；无参数仍读取远程索引。
+
+## 文本备份与导入确认
+
+纯静态插件可以用标准 `<input type="file" accept=".json,application/json">` 和用户选择的 `File.text()` 读取备份，无需调用宿主任意路径读写。选择前后都检查体积与结构；JSON 内携带插件类型和 schema 版本，拒绝跨插件文件与未知版本。导入先展示数量和合并规则，再确认写入，不能把取消或解析失败视作空备份覆盖现有数据。同 ID 覆盖与保留规则需要明确说明，保存失败不得提交内存状态。
+
+`fs.exporttext` 当前只写 UTF-8 文本，可导出 JSON、Markdown、Excel SpreadsheetML 2003 XML 工作簿（扩展名 .xml，显式标注 Excel XML）。不能把 XML 命名 .xlsx 或把浏览器下载当作原生系统保存。XML 所有用户内容须转义，使用 String 类型单元格，不能把用户文字解释成公式。二进制 xlsx 不属于当前文本 API 的输出能力。

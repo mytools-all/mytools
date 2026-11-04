@@ -154,6 +154,27 @@ fn install_npm_owned(
     Ok(name)
 }
 
+#[tauri::command]
+pub async fn plugin_update_npm(
+    app: tauri::AppHandle,
+    registry: tauri::State<'_, crate::services::plugins::SharedPluginRegistry>,
+    spec: String, code: String, from_version: String, version: String,
+) -> Result<String, String> {
+    let registry = registry.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let (package, requested) = split_spec(spec.trim());
+        if requested.as_deref() != Some(version.as_str()) || !is_safe_plugin_name(&code) {
+            return Err("更新必须指定确定的插件身份和版本".to_string());
+        }
+        let tarball = resolve_tarball(&package, &requested)?;
+        let tmp = download_tarball(&tarball)?;
+        let result = registry.update_pack(&tmp, &code, &from_version, &version);
+        let _ = std::fs::remove_file(&tmp);
+        if result.is_ok() { crate::commands::plugin::notify_plugins_changed(&app); }
+        result
+    }).await.map_err(|e| e.to_string())?
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
