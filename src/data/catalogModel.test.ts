@@ -10,10 +10,11 @@ describe("catalog index validation", () => {
     expect(demo.keywords).toContain("mytools-demo");
     expect(demo.replaces).toContain("demo-hello");
     expect(demo.npm).toBe("@mytools-all/mytools-demo");
+    expect(demo.npmSpec).toBe("@mytools-all/mytools-demo@0.1.1");
     const calendar = entries.find(entry => entry.name === "mytools-calendar")!;
-    expect(calendar.status).toBe("planned");
-    expect(calendar.npmSpec).toBeUndefined();
-    expect(calendar.capabilities).toEqual(["storage.get", "storage.set"]);
+    expect(calendar.status).toBe("ready");
+    expect(calendar.npmSpec).toBe("@mytools-all/mytools-calendar@0.1.0");
+    expect(calendar.capabilities).toEqual(["storage.get", "storage.set", "net.fetch", "shell.open"]);
   });
   it("rejects duplicate identities and executable or ambiguous install sources", () => {
     expect(() => parseToolCatalog({...snapshot, plugins: [snapshot.plugins[0], snapshot.plugins[0]]})).toThrow();

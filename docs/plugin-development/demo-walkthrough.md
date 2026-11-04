@@ -1,6 +1,6 @@
 # 案例：MyTools Demo
 
-状态：与 mytools-demo 0.1.1 源码对应；npm 是否可安装以索引 published 为准，当前请用本地源码或 tgz，不因版本号存在就假定已发布。
+状态：与 mytools-demo 0.1.1 源码对应；@mytools-all/mytools-demo@0.1.1 已于 2026-11-04 发布并核验下载；可使用商店/npm 安装，也可使用本地源码或 tgz。
 
 独立源码：[mytools-all/mytools-demo](https://github.com/mytools-all/mytools-demo)。在完整工作区中位于 plugins/mytools-demo。此案例无需 Vue、构建工具、Node 运行时或宿主源码。
 
