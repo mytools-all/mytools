@@ -160,3 +160,5 @@ pnpm test:e2e:driver
 新维护者或其他 AI 工具先读 [项目上下文](docs/PROJECT-CONTEXT.md) 与 [AGENTS.md](AGENTS.md)。插件作者使用 [插件开发指南](docs/plugin-development/README.md) 和 [Demo 案例](docs/plugin-development/demo-walkthrough.md)；[日历验证记录](docs/plugin-development/validation-calendar.md) 记录文档实作结果。架构和 API 总目录见 [docs](docs/README.md)。项目代码使用 [MIT](LICENSE)，第三方依赖保留各自的许可证。
 
 离线目录快照无需手工维护。发布应用前可运行 `pnpm catalog:sync` 从统一索引更新并校验快照；普通构建不依赖此联网步骤。详情页可确认卸载已安装插件，插件存储数据保留。
+
+E2E 使用标准 WebDriver Classic 协议（`wdio:enforceWebDriverClassic`），避免依赖嵌入式旧 WebView2 的 BiDi 实现；配置说明见 [WebdriverIO capabilities](https://v9.webdriver.io/docs/capabilities/)。初始化钩子失败时也会保留页面 URL、HTML 与截图诊断。
