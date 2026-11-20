@@ -1,6 +1,6 @@
 # MyTools 项目上下文
 
-状态：实现说明，核对日期 2026-11-04。本文是跨 AI 工具的起点；不包含账号、机器私有路径、令牌或用户数据。
+状态：实现说明，核对日期 2026-11-20。本文是跨 AI 工具的起点；不包含账号、机器私有路径、令牌或用户数据。
 
 ## 项目与仓库
 
@@ -16,7 +16,7 @@ MyTools 是 Windows 插件工具箱，宿主 Tauri 2 + Vue 3 / TypeScript + Pini
 | src/runtime、composables/pluginBridge.ts | 插件生命周期、消息、错误、授权队列 |
 | src/stores、views、components | 界面与状态 |
 | src/views/PluginManagerView.vue | 插件中心导航、详情抽屉与宿主窗口布局 |
-| src/views/plugin-center | 商店、已安装、开发者、偏好设置四个独立页面与公共样式；KeepAlive 保留切页状态 |
+| src/views/plugin-center | 商店、已安装、开发者、资源管理、偏好设置五个独立页面与公共样式；KeepAlive 保留切页状态 |
 | src/config/app.ts | 应用基本信息统一读取入口，供“关于”等界面使用，与用户偏好 store 分离 |
 | src-tauri/src/bootstrap.rs | 装配 |
 | src-tauri/src/commands | Tauri IPC 和窗口适配 |

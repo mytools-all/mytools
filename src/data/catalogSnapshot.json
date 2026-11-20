@@ -47,11 +47,11 @@
     {
       "name": "mytools-calc",
       "npm": "@mytools-all/mytools-calc",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-calc",
       "published": true,
       "title": "计算稿纸",
-      "description": "表达式求值 + 稿纸记录：算完留痕，随时复制结果。",
+      "description": "计算稿纸：表达式求值 + 稿纸记录，一键复制结果。",
       "category": "效率",
       "author": "MyTools Contributors",
       "license": "MIT",
@@ -86,11 +86,11 @@
     {
       "name": "mytools-clipboard",
       "npm": "@mytools-all/mytools-clipboard",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-clipboard",
       "published": true,
       "title": "系统剪贴板",
-      "description": "剪贴板历史：浏览、复制、删除之前的复制内容。",
+      "description": "系统剪贴板：查看历史记录、复制与删除。",
       "category": "系统",
       "author": "MyTools Contributors",
       "license": "MIT",
@@ -112,7 +112,8 @@
       ],
       "notes": [
         "安装后点击“打开”进入插件，也可从主页搜索启动。",
-        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。"
+        "涉及真实文件、剪贴板或网络的功能按能力声明申请授权，可在偏好设置中撤销。",
+        "图片历史需要支持图片采集的新宿主；旧宿主未采集过的图片不会补回。"
       ],
       "reference": {
         "package": "rubick-system-clipboard",
@@ -123,11 +124,11 @@
     {
       "name": "mytools-color",
       "npm": "@mytools-all/mytools-color",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-color",
       "published": true,
       "title": "颜色助手",
-      "description": "颜色转换与配色：HEX / RGB / HSL 互转，色板与对比度检查。",
+      "description": "颜色助手：HEX / RGB / HSL 互转、色板与对比度检查。",
       "category": "效率",
       "author": "MyTools Contributors",
       "license": "MIT",
@@ -135,7 +136,8 @@
       "capabilities": [
         "clipboard.write",
         "storage.get",
-        "storage.set"
+        "storage.set",
+        "screen.pickcolor"
       ],
       "features": [
         "HEX / RGB / HSL 互转",
@@ -161,11 +163,11 @@
     {
       "name": "mytools-color-picker",
       "npm": "@mytools-all/mytools-color-picker",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-color-picker",
       "published": true,
-      "title": "取色器",
-      "description": "屏幕取色：跟随鼠标读取像素颜色，复制 HEX / RGB。",
+      "title": "屏幕取色器",
+      "description": "屏幕取色器",
       "category": "效率",
       "author": "MyTools Contributors",
       "license": "MIT",
@@ -312,11 +314,11 @@
     {
       "name": "mytools-markdown",
       "npm": "@mytools-all/mytools-markdown",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-markdown",
       "published": true,
       "title": "Markdown 编辑器",
-      "description": "左写右看：实时预览渲染，草稿自动保存。",
+      "description": "Markdown 编辑器：实时预览、自动保存草稿。",
       "category": "效率",
       "author": "MyTools Contributors",
       "license": "MIT",
@@ -351,11 +353,11 @@
     {
       "name": "mytools-ocr",
       "npm": "@mytools-all/mytools-ocr",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "repository": "https://github.com/mytools-all/mytools-ocr",
       "published": true,
-      "title": "讯飞 OCR",
-      "description": "图片识别为文字：调用讯飞开放平台 OCR 接口（需配置密钥）。",
+      "title": "图片 OCR",
+      "description": "通过本机 Umi-OCR 离线识别图片文字，无需登录",
       "category": "效率",
       "author": "MyTools Contributors",
       "license": "MIT",
@@ -365,28 +367,33 @@
         "net.fetch",
         "storage.get",
         "storage.set",
-        "storage.del",
-        "clipboard.write"
+        "clipboard.write",
+        "fs.exporttext",
+        "clipboard.read",
+        "shell.open"
       ],
       "features": [
-        "图片拖拽识别",
-        "识别结果编辑",
-        "密钥本地保存"
+        "面板截图识字联动",
+        "仅打开时自动识别新复制图片（默认开启）",
+        "本地识别历史与清空",
+        "本机服务设置",
+        "文字编辑、复制和导出"
       ],
       "keywords": [
+        "图片OCR",
+        "图片 OCR",
         "OCR",
         "文字识别",
-        "讯飞OCR",
-        "图片文字"
+        "图片文字",
+        "本地OCR",
+        "Umi-OCR"
       ],
       "notes": [
-        "需要自行配置已开通的讯飞 API 凭据；识别请求会发送所选图片。"
-      ],
-      "reference": {
-        "package": "rubick-xunfei-ocr",
-        "label": "讯飞 OCR（rubick-xunfei-ocr）",
-        "url": "https://www.npmjs.com/package/rubick-xunfei-ocr"
-      }
+        "需运行 Umi-OCR 本机服务，默认 127.0.0.1:1224。",
+        "自动识别仅在插件打开期间运行；历史只保存文字，最近 30 条。",
+        "连接不可达时提示前往官方发布页下载安装，默认拒绝；不自动执行安装程序。",
+        "自动识别和面板截图联动需要支持图片读取、截图上下文的新宿主。"
+      ]
     },
     {
       "name": "mytools-rename",
@@ -432,11 +439,11 @@
     {
       "name": "mytools-search",
       "npm": "@mytools-all/mytools-search",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-search",
       "published": true,
       "title": "本地搜索",
-      "description": "使用 Everything 索引搜索全盘文件与文件夹，支持原生搜索语法和预览。",
+      "description": "本地搜索",
       "category": "文件",
       "author": "MyTools Contributors",
       "license": "MIT",
@@ -445,6 +452,7 @@
         "fs.searchstatus",
         "fs.globalsearch",
         "fs.searchpreview",
+        "fs.searchicons",
         "shell.open",
         "shell.reveal",
         "clipboard.write",
@@ -474,10 +482,10 @@
     {
       "name": "mytools-calendar",
       "npm": "@mytools-all/mytools-calendar",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "published": true,
       "title": "我的日历",
-      "description": "公农历、传统节日与每日标签待办，轻松安排每一天。",
+      "description": "公农历、传统节日与每日待办，轻松安排每一天。",
       "category": "效率",
       "author": "MyTools",
       "license": "MIT",
@@ -486,14 +494,18 @@
         "storage.get",
         "storage.set",
         "net.fetch",
-        "shell.open"
+        "shell.open",
+        "fs.exporttext"
       ],
       "features": [
         "公历、农历与传统节日离线查看",
         "公历/农历日期跳转，支持闰月",
         "每日标签待办、完成状态筛选和月历展示开关",
         "中国大陆放假与调休上班标记",
-        "手动更新年度安排、查看官方通知、离线缓存"
+        "手动更新年度安排、查看官方通知、离线缓存",
+        "全部、筛选或勾选事项导出",
+        "增量、勾选、合并更新和覆盖导入",
+        "跨日期待办管理与批量操作"
       ],
       "keywords": [
         "我的日历",
@@ -549,6 +561,43 @@
       ],
       "homepage": "https://github.com/mytools-all/mytools-clock#readme",
       "icon": "https://raw.githubusercontent.com/mytools-all/mytools-clock/main/icon.svg"
+    },
+    {
+      "name": "mytools-computer-assistant",
+      "npm": "@mytools-all/mytools-computer-assistant",
+      "repository": "https://github.com/mytools-all/mytools-computer-assistant",
+      "category": "系统",
+      "author": "MyTools",
+      "license": "MIT",
+      "homepage": "https://github.com/mytools-all/mytools-computer-assistant#readme",
+      "features": [
+        "整机 CPU、内存、逐网卡速率和磁盘空间",
+        "按应用汇总与按进程查看，展开 PID 明细",
+        "私有工作集与含共享部分的工作集切换",
+        "进程排行、系统信息和可选提醒"
+      ],
+      "keywords": [
+        "电脑助手",
+        "资源监控",
+        "系统监控",
+        "CPU",
+        "内存监控"
+      ],
+      "notes": [
+        "需要提供 system.resources 能力的新宿主；GPU 与温度暂不支持。",
+        "仅插件打开且可见时监控，资源提醒默认关闭。",
+        "应用分组依据同路径进程树或已核实的服务配置，不能保证完全复制任务管理器分组。"
+      ],
+      "version": "0.1.1",
+      "published": true,
+      "title": "电脑助手",
+      "description": "本机 CPU、内存、网速与磁盘空间监控，支持进程排行和可选提醒",
+      "capabilities": [
+        "system.resources",
+        "storage.get",
+        "storage.set",
+        "system.notify"
+      ]
     }
   ]
 }
