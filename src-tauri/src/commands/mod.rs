@@ -24,3 +24,5 @@ pub mod settings;
 pub mod system;
 pub mod tray;
 pub mod window;
+
+pub mod resources;

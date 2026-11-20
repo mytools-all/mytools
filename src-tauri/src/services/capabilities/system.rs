@@ -10,10 +10,26 @@ pub(super) fn register<R: Runtime>(
     app: &AppHandle<R>,
     registry: &mut CapabilityRegistry,
 ) -> Result<(), CapabilityError> {
-    registry.register(Capability::new("system.networkdetails", Permission::Read, "Read the complete Windows ipconfig /all report", Box::new(|_| {
-        crate::infrastructure::net_ifaces::configuration_report().map(Value::String)
-            .map_err(|e| CapabilityError::handler_failed("system.networkdetails", e))
-    })))?;
+    let resources_app = app.clone();
+    registry.register(Capability::new(
+        "system.resources",
+        Permission::Exec,
+        "Read machine CPU, memory, disk, network rates and process rankings",
+        Box::new(move |_| {
+            crate::services::resources::snapshot(&resources_app)
+                .map_err(|error| CapabilityError::handler_failed("system.resources", error))
+        }),
+    ))?;
+    registry.register(Capability::new(
+        "system.networkdetails",
+        Permission::Read,
+        "Read the complete Windows ipconfig /all report",
+        Box::new(|_| {
+            crate::infrastructure::net_ifaces::configuration_report()
+                .map(Value::String)
+                .map_err(|e| CapabilityError::handler_failed("system.networkdetails", e))
+        }),
+    ))?;
     let path_app = app.clone();
     registry.register(Capability::new(
         "system.path",

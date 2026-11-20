@@ -1,5 +1,7 @@
 # 04 · 插件规范
 
+新增公开只读能力 `system.resources`：整机 CPU、内存、逐网卡速率、磁盘余量与进程排行。需要声明和授权，返回单位、缓存与统计边界见 [资源管理与电脑助手](15-resources.md)。
+
 > **状态**：API v1 参考（以实际 iframe 契约为准；入门见 [开发指南](plugin-development/README.md)）· 相关：[02-architecture](./02-architecture.md) · [05-data-and-storage](./05-data-and-storage.md)
 > **本文回答**：一个插件长什么样？怎么声明所需能力？怎么被授权、怎么被运行、怎么被打包安装？
 

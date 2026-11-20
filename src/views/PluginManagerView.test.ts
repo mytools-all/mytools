@@ -139,7 +139,7 @@ describe("PluginManagerView (插件中心)", () => {
   it("has store, installed and developer sections", async () => {
     const { wrapper } = await mountView("store");
     const labels = wrapper.findAll(".pc__side-nav-item").map((n) => n.text());
-    expect(labels).toEqual(["插件商店", "已安装", "开发者", "偏好设置"]);
+    expect(labels).toEqual(["插件商店", "已安装", "开发者", "资源管理", "偏好设置"]);
   });
 
   it("lists installed plugins with their origin badge", async () => {

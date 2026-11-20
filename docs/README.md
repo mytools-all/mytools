@@ -6,6 +6,8 @@
 
 ## 开始阅读
 
+- 资源统计口径与电脑助手：[资源管理与电脑助手](15-resources.md)。
+
 - 更换 AI 工具或接手项目：[项目上下文](PROJECT-CONTEXT.md)，并阅读仓库 AGENTS.md。
 - 开发插件：[完整开发指南](plugin-development/README.md) → [Demo 案例](plugin-development/demo-walkthrough.md)。
 - 核查文档是否可用：[日历插件验证](plugin-development/validation-calendar.md)。

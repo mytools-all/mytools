@@ -29,7 +29,7 @@ static NEXT_LABEL_SEQ: AtomicU32 = AtomicU32::new(1);
 
 #[tauri::command]
 pub async fn plugin_center_open_window(app: tauri::AppHandle, section: String) -> Result<String, String> {
-    if !matches!(section.as_str(), "store" | "installed" | "dev" | "settings") {
+    if !matches!(section.as_str(), "store" | "installed" | "dev" | "resources" | "settings") {
         return Err("invalid plugin center section".into());
     }
     let label = "center";

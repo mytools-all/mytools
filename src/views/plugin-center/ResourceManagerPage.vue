@@ -1,0 +1,36 @@
+<script setup lang="ts">
+import {computed,onMounted,onActivated,onDeactivated,onBeforeUnmount,ref} from 'vue';
+import {safeInvoke,tauriAvailable} from '@/lib/tauri';
+import {formatBytes,sizeLabel,type Telemetry,type StorageSnapshot} from '@/lib/resources';
+import ExternalResources from './ExternalResources.vue';
+const snapshot=ref<{telemetry:Telemetry;sessions:{window:string;plugin:string}[]}|null>(null);
+const storage=ref<StorageSnapshot|null>(null),error=ref(''),storageError=ref(''),scanning=ref(false),query=ref(''),sort=ref('size'),active=ref(false),loading=ref(false);
+const closeTarget=ref('');let timer:ReturnType<typeof setTimeout>|undefined;let disposed=false;
+const rows=computed(()=>[...(storage.value?.plugins||[])].filter(p=>(p.title+p.id).toLowerCase().includes(query.value.toLowerCase())).sort((a,b)=>sort.value==='name'?a.title.localeCompare(b.title):b.install.bytes-a.install.bytes));
+const running=(id:string)=>snapshot.value?.sessions.filter(s=>s.plugin===id)||[];
+async function poll(){if(!active.value||loading.value||!tauriAvailable())return;if(timer)clearTimeout(timer);timer=undefined;loading.value=true;try{const value=await safeInvoke<typeof snapshot.value>('resources_snapshot');if(active.value){snapshot.value=value;error.value='';}}catch(e){if(active.value)error.value=String(e);}finally{loading.value=false;if(active.value)timer=setTimeout(()=>void poll(),2000);}}
+async function scan(force=false){if(scanning.value||!tauriAvailable())return;scanning.value=true;storageError.value='';try{const value=await safeInvoke<StorageSnapshot>('resources_storage',{force});if(!disposed)storage.value=value;}catch(e){storageError.value=String(e);}finally{scanning.value=false;}}
+function start(){if(active.value)return;active.value=true;if(tauriAvailable()){void poll();if(!storage.value)void scan();}else error.value='请在 MyTools 中查看资源信息';}
+function stop(){active.value=false;if(timer)clearTimeout(timer);timer=undefined;}
+async function open(path:string){try{await safeInvoke('app_launcher_open',{path});}catch(e){error.value=String(e);}}
+async function closeWindows(){try{for(const window of running(closeTarget.value).filter(s=>s.window.startsWith('plugin-')))await safeInvoke('plugin_close_window',{label:window.window});closeTarget.value='';await poll();}catch(e){error.value=String(e);}}
+onMounted(start);onActivated(start);onDeactivated(stop);onBeforeUnmount(()=>{disposed=true;stop();});
+</script>
+<template>
+<section class="resource-page">
+<header><div><h2>资源管理</h2><p>查看 MyTools 自身资源与插件存储，页面打开时每 2 秒更新运行信息。</p></div><button :disabled="scanning" @click="scan(true)">{{ scanning?'正在扫描…':'重新扫描磁盘' }}</button></header>
+<p v-if="error" class="error" role="alert">{{ error }}</p><p v-if="storageError" class="error" role="alert">{{ storageError }}</p>
+<div v-if="snapshot" class="cards"><article><span>MyTools 进程组合计 CPU</span><strong>{{ snapshot.telemetry.warming?'采样中…':snapshot.telemetry.mytools.cpu.toFixed(1)+'%' }}</strong></article><article><span>进程组合计工作集</span><strong>{{ formatBytes(snapshot.telemetry.mytools.memory) }}</strong></article><article><span>关联进程 / WebView</span><strong>{{ snapshot.telemetry.mytools.processes.length }} / {{ snapshot.telemetry.mytools.webviewProcesses.length }}</strong></article><article><span>活动插件实例</span><strong>{{ snapshot.sessions.length }}</strong></article></div>
+<p class="note">内存为进程工作集，合计可能重复计算共享页。WebView 渲染进程可被多个插件共用，无法单独归属的插件 CPU / 内存不均摊、不伪装为零。</p><p v-if="snapshot?.telemetry.mytools.association==='parent-tree-only'" class="note">未取得 WebView 环境进程标识，目前仅按父子进程树统计，可能不完整。</p>
+<details v-if="snapshot"><summary>MyTools 主程序和共享运行时进程</summary><table><thead><tr><th>进程</th><th>PID</th><th>CPU（整机口径）</th><th>工作集</th></tr></thead><tbody><tr v-for="p in snapshot.telemetry.mytools.processes" :key="p.pid"><td>{{ p.name }}</td><td>{{ p.pid }}</td><td>{{ p.cpu.toFixed(1) }}%</td><td>{{ formatBytes(p.memory) }}</td></tr></tbody></table></details>
+<h3>全部已安装插件</h3><div class="filters"><input v-model="query" placeholder="搜索插件名称…" aria-label="搜索插件名称"><select v-model="sort" aria-label="插件排序"><option value="size">按安装大小</option><option value="name">按名称</option></select></div>
+<p v-if="!storage">{{ scanning?'正在统计安装文件与数据…':'尚未取得磁盘信息' }}</p><p v-if="storage?.limited" class="error">本次扫描达到时间或文件数上限，标注为部分扫描的数字仅是已统计部分。</p><p v-if="storage&&!storage.sharedStoreReadable" class="error">共享插件存储无法完整读取，相关逻辑大小显示不可用。</p>
+<div class="table-scroll"><table><thead><tr><th>插件</th><th>状态 / 活动实例</th><th>安装文件</th><th>私有文件</th><th>配置条目（逻辑）</th><th>内存归属</th><th>操作</th></tr></thead><tbody><tr v-for="p in rows" :key="p.id"><td>{{ p.title }}<small>{{ p.id }} · {{ p.version }}</small></td><td>{{ p.enabled?'已启用':'已停用' }} / {{ running(p.id).length }}</td><td>{{ sizeLabel(p.install) }}</td><td>{{ sizeLabel(p.sandbox) }}</td><td>{{ formatBytes(p.settingsLogicalBytes) }}</td><td>{{ running(p.id).length?'共享运行时，无法单独归属':'未活动 / 未单独统计' }}</td><td><button @click="open(p.path)">打开目录</button><button v-if="running(p.id).some(s=>s.window.startsWith('plugin-'))" @click="closeTarget=p.id">关闭窗口</button></td></tr></tbody></table></div>
+<div v-if="closeTarget" class="confirm"><p>请先保存 {{ closeTarget }} 中的内容。确认关闭其独立窗口？主窗口中的插件不会关闭。</p><button @click="closeTarget=''">保留</button><button @click="closeWindows">确认关闭独立窗口</button></div>
+<h3>磁盘目录分类</h3><p class="note">{{ storage?.note }} 自定义目录可能重叠，各行不直接相加。目录扫描缓存 60 秒，可手动重新扫描。</p><table><thead><tr><th>分类</th><th>大小</th><th>文件数</th><th>位置</th></tr></thead><tbody><tr v-for="c in storage?.categories||[]" :key="c.title"><td>{{ c.title }}</td><td>{{ sizeLabel(c.size) }}</td><td>{{ c.size.files }}<small v-if="c.size.skipped||c.size.errors">跳过 {{ c.size.skipped }} / 错误 {{ c.size.errors }}</small></td><td><button @click="open(c.path)">打开目录</button><small>{{ c.path }}</small></td></tr></tbody></table>
+<ExternalResources v-if="snapshot" :groups="snapshot.telemetry.externalApplications" :processes="snapshot.telemetry.externalServices" :warming="snapshot.telemetry.warming" />
+</section>
+</template>
+<style scoped>
+.resource-page{flex:1;min-width:0;overflow:auto;padding:2px 8px 20px;color:var(--panel-fg)}header,.filters{display:flex;gap:12px;align-items:center;justify-content:space-between}h2{margin:0}p,.note{font-size:12px;color:var(--text-dim);line-height:1.7}.error{color:var(--danger)}button,input,select{color:var(--panel-fg);background:var(--surface-bg);border:1px solid var(--panel-control-border);border-radius:7px;padding:7px;max-width:100%}select option{background:var(--surface-bg)}button{cursor:pointer}button:disabled{opacity:.6}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}.cards article{padding:14px;background:var(--surface-bg);border:1px solid var(--panel-border);border-radius:10px}.cards span,small{display:block;color:var(--text-dim);font-size:11px}.cards strong{display:block;font-size:22px;margin-top:8px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:10px 7px;border-bottom:1px solid var(--panel-border);text-align:left;vertical-align:top}td{overflow-wrap:anywhere}td button{margin:2px}.table-scroll{overflow:auto}.table-scroll table{min-width:700px}.confirm{border:1px solid var(--accent);border-radius:8px;padding:12px;margin:12px 0}.filters input{flex:1}summary{cursor:pointer;margin:16px 0}
+</style>

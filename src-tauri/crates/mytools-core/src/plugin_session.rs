@@ -36,6 +36,18 @@ impl PluginSessions {
         }
     }
 
+    pub fn active_windows(&self) -> Vec<(String, String)> {
+        self.bindings
+            .lock()
+            .map(|bindings| {
+                bindings
+                    .iter()
+                    .map(|(window, (_, plugin))| (window.clone(), plugin.clone()))
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
     pub fn matches(&self, window: &str, token: &str, plugin: &str) -> bool {
         self.bindings
             .lock()

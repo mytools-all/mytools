@@ -53,6 +53,8 @@ pub fn run() {
         })
         .setup(bootstrap::setup)
         .invoke_handler(tauri::generate_handler![
+            commands::resources::resources_snapshot,
+            commands::resources::resources_storage,
             commands::panel::panel_show,
             commands::panel::panel_middle_enabled,
             commands::panel::panel_set_middle_enabled,

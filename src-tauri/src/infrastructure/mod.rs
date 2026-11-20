@@ -10,3 +10,4 @@ pub mod net_ifaces;
 pub mod middle_mouse;
 pub mod launch_context;
 pub mod paths;
+pub mod process_resources;

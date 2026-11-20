@@ -5,16 +5,18 @@ import PluginDetailDrawer from "@/components/PluginDetailDrawer.vue";
 import PluginStorePage from "./plugin-center/PluginStorePage.vue";
 import InstalledPluginsPage from "./plugin-center/InstalledPluginsPage.vue";
 import PluginDeveloperPage from "./plugin-center/PluginDeveloperPage.vue";
+import ResourceManagerPage from "./plugin-center/ResourceManagerPage.vue";
 import PluginPreferencesPage from "./plugin-center/PluginPreferencesPage.vue";
 import { usePluginsStore } from "@/stores/plugins";
 import { useSettingsStore } from "@/stores/settings";
 import { safeInvoke, tauriAvailable, isDetachedCenter } from "@/lib/tauri";
 
-type Section = "store" | "installed" | "dev" | "settings";
+type Section = "store" | "installed" | "dev" | "resources" | "settings";
 const sections: { id: Section; label: string }[] = [
   {id:"store", label:"插件商店"},
   {id:"installed", label:"已安装"},
   {id:"dev", label:"开发者"},
+  {id:"resources", label:"资源管理"},
   {id:"settings", label:"偏好设置"},
 ];
 const route = useRoute();
@@ -24,7 +26,7 @@ const settings = useSettingsStore();
 const detached = isDetachedCenter();
 const section = computed<Section>(() => {
   const value = route.query.section;
-  return value === "installed" || value === "dev" || value === "settings" ? value : "store";
+  return value === "installed" || value === "dev" || value === "resources" || value === "settings" ? value : "store";
 });
 const detailName = computed(() => (section.value === "store" || section.value === "installed") && typeof route.query.detail === "string" ? route.query.detail : "");
 function navTo(next: Section) { void router.push({path:"/plugins", query:{section:next}}); }
@@ -53,6 +55,7 @@ onBeforeUnmount(() => { layout(720,480); });
         <PluginStorePage v-if="section === 'store'" :detached="detached" @detail="showDetail" />
         <InstalledPluginsPage v-else-if="section === 'installed'" :detached="detached" @detail="showDetail" />
         <PluginDeveloperPage v-else-if="section === 'dev'" />
+        <ResourceManagerPage v-else-if="section === 'resources'" />
         <PluginPreferencesPage v-else :detached="detached" />
       </KeepAlive>
     </main>
