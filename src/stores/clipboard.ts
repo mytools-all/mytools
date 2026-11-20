@@ -7,6 +7,7 @@ import { tauriAvailable } from "@/lib/tauri";
 export interface ClipboardEntry {
   id: number;
   content: string;
+  kind?: "text" | "image";
   pinned: boolean;
   created_at: string;
 }
@@ -85,7 +86,7 @@ export const useClipboardStore = defineStore("clipboard", () => {
   async function startListening() {
     if (unlisten || !tauriAvailable()) return;
     try {
-      unlisten = await listen<string>("clipboard:changed", () => {
+      unlisten = await listen<void>("clipboard:changed", () => {
         void refresh();
       });
     } catch (e) {

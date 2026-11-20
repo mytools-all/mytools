@@ -56,6 +56,7 @@ pub fn run() {
             commands::resources::resources_snapshot,
             commands::resources::resources_storage,
             commands::panel::panel_show,
+            commands::panel::panel_capture_image,
             commands::panel::panel_middle_enabled,
             commands::panel::panel_set_middle_enabled,
             commands::ping::ping,

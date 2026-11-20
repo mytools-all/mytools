@@ -8,6 +8,7 @@
   --panel-bg: #15191f;
   --panel-bg-strong: #181e26;
   --surface-bg: #1d242e;
+  --panel-control-bg: var(--surface-bg);
   --panel-fg: #e8edf5;
   --panel-border: #ffffff0d;
   --panel-control-border: #ffffff14;

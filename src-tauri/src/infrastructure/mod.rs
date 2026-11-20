@@ -3,6 +3,7 @@ pub mod app_identity;
 #[cfg(any(windows, test))]
 pub mod taskbar_identity;
 pub mod clipboard_watcher;
+pub mod clipboard_files;
 pub mod everything;
 pub mod file_drop;
 pub mod logging;

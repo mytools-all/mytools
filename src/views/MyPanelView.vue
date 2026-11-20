@@ -11,6 +11,7 @@
       <div v-if="kind === 'path'"><button @click="browse(false)">选择文件</button><button @click="browse(true)">选择文件夹</button></div>
       <input v-if="kind !== 'plugin'" v-model="title" placeholder="显示名称（可选）" aria-label="入口名称" /><button @click="add">添加到面板</button>
     </div>
+    <div class="capture-tools"><button :disabled="capturing" @click="capture(false)">截图</button><button :disabled="capturing || !ocrAvailable" @click="capture(true)">截图识字</button><span>{{ capturing ? "选取截图区域，Esc 取消" : "截图后可传给图片 OCR" }}</span></div>
     <div class="panel-grid" role="list">
       <article v-for="entry in visible" :key="entry.id" :draggable="editing" role="listitem" @dragstart="dragged = entry.id" @dragover.prevent @drop.prevent="reorder(entry.id)">
         <button class="entry" :title="entry.target" @click="launch(entry)"><img v-if="icon(entry)" :src="icon(entry)" alt="" /><span v-else class="entry-icon">{{ entry.kind === 'url' ? '↗' : entry.kind === 'path' ? '▱' : label(entry).slice(0, 1) }}</span><span>{{ label(entry) }}</span></button>
@@ -23,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
 import { useEventListener } from "@vueuse/core";
 import { storeToRefs } from "pinia";
 import { usePanelStore } from "@/stores/panel";
@@ -32,9 +33,15 @@ import { usePluginsStore } from "@/stores/plugins";
 import { useAppIndexStore } from "@/stores/appIndex";
 import { safeInvoke, tauriAvailable } from "@/lib/tauri";
 import { movePanelEntry, validPanelEntry, type PanelEntry } from "@/lib/panelEntries";
+import { useSettingsStore } from "@/stores/settings";
+import { listen } from "@tauri-apps/api/event";
 import { pluginDisplayName } from "@/lib/pluginPresentation";
 
 const plugins = usePluginsStore();
+const settings = useSettingsStore();
+const capturing = ref(false);
+const ocrAvailable = computed(() => plugins.enabledPlugins.some(p => p.manifest.name === "mytools-ocr"));
+let unlistenShown: (() => void) | undefined;
 const apps = useAppIndexStore();
 const { entries } = storeToRefs(usePanelStore());
 const query = ref("");
@@ -86,6 +93,26 @@ async function launch(entry: PanelEntry) {
     await close();
   } catch (error) { message.value = error instanceof Error ? error.message : String(error); }
 }
+async function capture(ocr: boolean) {
+  if (capturing.value) return;
+  capturing.value = true;
+  adding.value = false;
+  try {
+    const captured = await safeInvoke<boolean>("panel_capture_image");
+    if (!captured) { message.value = "已取消截图"; return; }
+    if (ocr) {
+      await safeInvoke("plugin_open_window", {pluginId:"mytools-ocr",feature:"ocr",fromPanel:true});
+      await close();
+    } else message.value = "截图已复制，可选择图片 OCR 继续识别";
+  } catch(error) { message.value = String(error); }
+  finally { capturing.value = false; }
+}
+async function refreshPanel() {
+  await Promise.all([plugins.refresh(),settings.init()]);
+  entries.value = entries.value.map(entry => entry.kind === "plugin" && label(entry) !== entry.title ? {...entry,title:label(entry)} : entry);
+}
+useEventListener(window,"focus",()=>{if(!capturing.value)void refreshPanel();});
+onBeforeUnmount(()=>unlistenShown?.());
 async function toggleMiddle(event: Event) {
   const enabled = (event.target as HTMLInputElement).checked;
   try { await safeInvoke("panel_set_middle_enabled", {options: {enabled}}); middleEnabled.value = enabled; message.value = enabled ? "中键唤出已开启" : "已恢复鼠标中键原有行为"; }
@@ -93,6 +120,7 @@ async function toggleMiddle(event: Event) {
 }
 onMounted(async () => {
   await plugins.ensureLoaded();
+  if (tauriAvailable()) unlistenShown = await listen("panel:shown",()=>{if(!capturing.value)void refreshPanel();});
   void apps.ensureLoaded();
   if (!Array.isArray(entries.value)) entries.value = [];
   entries.value = entries.value.filter(validPanelEntry);
@@ -106,11 +134,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.my-panel { width:100%; min-width:0; flex:1; height:100%; box-sizing:border-box; font-family:"Segoe UI","Microsoft YaHei",sans-serif; display:flex; flex-direction:column; color:var(--panel-fg); background:var(--panel-bg-strong); border:1px solid var(--panel-border); border-radius:12px; overflow:hidden; }
+.my-panel { color-scheme:inherit; width:100%; min-width:0; flex:1; height:100%; box-sizing:border-box; font-family:"Segoe UI","Microsoft YaHei",sans-serif; display:flex; flex-direction:column; color:var(--panel-fg); background:var(--panel-bg-strong); border:1px solid var(--panel-border); border-radius:12px; overflow:hidden; }
 header { display:flex; align-items:center; gap:12px; padding:14px; border-bottom:1px solid var(--panel-border); }
 header span,footer { color:var(--text-dim); font-size:11px; }
 header button { margin-left:auto; }
 button,input,select { color:inherit; background:var(--panel-control-bg); border:1px solid var(--panel-control-border); border-radius:7px; padding:7px; }
+select option { color:var(--panel-fg); background:var(--surface-bg); }
+.capture-tools{display:flex;align-items:center;gap:8px;padding:0 10px 8px}.capture-tools span{font-size:11px;color:var(--text-dim)}
+button:disabled{opacity:.5;cursor:default}
 button { cursor:pointer; } button:hover { background:var(--hover-bg); }
 .panel-tools { display:flex; gap:6px; padding:10px; }.panel-tools input { flex:1; min-width:0; }
 .add-form { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:0 10px 10px; }.add-form input,.add-form select { min-width:0; }

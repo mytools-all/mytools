@@ -40,8 +40,20 @@ pub(super) fn register<R: Runtime>(
     registry.register(Capability::new(
         "clipboard.read",
         Permission::Exec,
-        "Read text from the system clipboard",
-        Box::new(move |_call: &CapabilityCall| {
+        "Read text or explicitly requested images from the system clipboard",
+        Box::new(move |call: &CapabilityCall| {
+            if let Some(types) = call.args.get("types") {
+                if types != &serde_json::json!(["image"]) {
+                    return Err(CapabilityError::invalid_args("clipboard.read types must be ['image']"));
+                }
+                let sequence = crate::infrastructure::clipboard_files::sequence();
+                if sequence.is_some() && call.args.get("sequence").and_then(Value::as_u64) == sequence.map(u64::from) {
+                    return Ok(serde_json::json!({"sequence": sequence,"unchanged":true}));
+                }
+                let image = crate::services::clipboard::read_image_content(&read_clipboard_app)
+                    .map_err(|error| CapabilityError::handler_failed("clipboard.read",error))?;
+                return Ok(serde_json::json!({"sequence":sequence,"image":image.map(|data_url|serde_json::json!({"mime":"image/png","dataUrl":data_url}))}));
+            }
             let text = crate::services::clipboard::read_text(&read_clipboard_app)
                 .map_err(|e| CapabilityError::handler_failed("clipboard.read", e.to_string()))?;
             Ok(serde_json::json!({ "text": text }))

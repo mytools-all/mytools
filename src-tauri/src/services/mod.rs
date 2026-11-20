@@ -9,5 +9,7 @@ pub mod search;
 pub mod settings;
 pub mod system;
 
+pub mod screenshot;
+
 pub mod resources;
 pub mod resource_storage;
