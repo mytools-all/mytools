@@ -4,6 +4,10 @@
 
 宿主提供主页、插件管理、鼠标中键面板、托盘、悬浮球、权限管理和能力桥接。工具插件独立开发、安装和发布，不编译进宿主。
 
+## 新手与插件开发
+
+从[新手入门教程](docs/GETTING-STARTED.md)认识仓库、插件调用与 Rust 基础；第一个插件可直接复制[便签模板](docs/plugin-development/templates/mytools-notes/README.md)。完整契约见[插件开发指南](docs/plugin-development/README.md)，评估小模型独立开发能力使用[统一验收任务](docs/plugin-development/model-evaluation.md)。
+
 ## 下载正式版
 
 前往 [MyTools Releases](https://github.com/mytools-all/mytools/releases/latest)，下载 Windows x64 的 `MyTools_0.1.0_x64-setup.exe` 安装包。也提供包含主程序和 WebView2Loader.dll 的免安装运行 zip，解压后运行 mytools.exe；用户数据仍保存在 AppData，不是随目录移动的数据便携版。
@@ -15,6 +19,8 @@
 - [项目与插件索引](https://github.com/mytools-all/mytools-home)
 - [插件 npm 索引](https://github.com/mytools-all/mytools-home/blob/main/plugins/database.json)
 - npm 统一作用域：`@mytools-all`
+
+图片剪贴板、面板截图和电脑助手依赖当前 main 分支新增的宿主能力。现有 0.1.0 正式安装包不包含这些更新，使用相关插件前请按下文从源码构建新版宿主。
 
 ## 从零编译与安装（Windows x64）
 

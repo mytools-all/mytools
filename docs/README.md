@@ -8,6 +8,10 @@
 
 - 资源统计口径与电脑助手：[资源管理与电脑助手](15-resources.md)。
 
+- 本轮插件问题与日历功能：[2026-11-19 核查和修复说明](14-plugin-maintenance.md)。
+- 零基础接手：[新手入门与 Rust 路线](GETTING-STARTED.md)。
+- 复制第一个插件：[可运行便签模板](plugin-development/templates/mytools-notes/README.md)。
+- 检验小模型是否能独立开发：[统一任务、评分与原生验收](plugin-development/model-evaluation.md)，尚未运行指定 8B 模型。
 - 更换 AI 工具或接手项目：[项目上下文](PROJECT-CONTEXT.md)，并阅读仓库 AGENTS.md。
 - 开发插件：[完整开发指南](plugin-development/README.md) → [Demo 案例](plugin-development/demo-walkthrough.md)。
 - 核查文档是否可用：[日历插件验证](plugin-development/validation-calendar.md)。

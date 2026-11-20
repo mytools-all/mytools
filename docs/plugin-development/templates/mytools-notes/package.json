@@ -1,0 +1,10 @@
+{
+  "name": "mytools-notes-starter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "MyTools 离线便签教学模板，未发布",
+  "files": ["plugin.json", "index.html", "app.mjs", "model.mjs", "style.css", "icon.svg", "README.md", "LICENSE"],
+  "scripts": {"test": "node --test", "check": "node --test && npm pack --dry-run"}
+}

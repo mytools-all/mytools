@@ -1,0 +1,12 @@
+{
+  "name": "mytools-notes-starter",
+  "pluginName": "便签入门示例",
+  "description": "学习加载、保存与失败恢复的单页便签",
+  "version": "0.1.0",
+  "author": "MyTools Contributors",
+  "main": "index.html",
+  "icon": "icon.svg",
+  "apiVersion": 1,
+  "capabilities": ["storage.get", "storage.set"],
+  "features": [{"code": "main", "explain": "打开便签入门示例", "cmds": ["便签入门", "notes starter"]}]
+}

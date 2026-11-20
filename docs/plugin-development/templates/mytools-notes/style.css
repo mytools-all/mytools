@@ -1,0 +1,14 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { width: 100%; max-width: 48rem; padding: 1rem; margin: auto; }
+h1 { margin-top: 0; font-size: 1.4rem; }
+label { display: block; margin-bottom: .5rem; }
+textarea { width: 100%; min-width: 0; height: 40vh; min-height: 7rem; padding: .75rem; font: inherit; resize: vertical; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .75rem; }
+button { padding: .5rem 1rem; font: inherit; cursor: pointer; }
+button:disabled { cursor: default; }
+:focus-visible { outline: 3px solid #3986db; outline-offset: 3px; }
+p { overflow-wrap: anywhere; }
+.hint { font-size: .85rem; }
+[hidden] { display: none; }

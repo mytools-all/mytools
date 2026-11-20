@@ -108,8 +108,8 @@ my-plugin/
 | 能力 id | 参数 | 返回 | 权限 | 备注 |
 |---|---|---|---|---|
 | `clipboard.write` | `{ text }` / `{ dataUrl }` | — | write | 文本与图片 |
-| `clipboard.read` | — | `{ text }` | exec | 需授权 |
-| `clipboard.history` | `{ limit? }` | `ClipboardEntry[]` | exec | 需授权；读剪贴板历史 |
+| `clipboard.read` | 默认无参；图片用 `{ types:["image"], sequence?:number }` | 默认 `{text}`；图片 `{sequence,image:{mime,dataUrl} 或 null}`，未变时 `{sequence,unchanged:true}` | exec | 图片读取需显式请求；沿用图片大小限制，sequence 用于避免重复编码 |
+| `clipboard.history` | `{ limit? }` | `ClipboardEntry[]` | exec | 需授权；读剪贴板历史，含 kind: text/image，图片 content 为 PNG data URL；图片采集需包含 2026-11-19 后端修复的宿主 |
 | `clipboard.remove` | `{ id }` | `true` | write | 需授权；删除一条历史 |
 | `shell.open` | `{ path \| url }` | — | write | 路径 / URL 两种形态 |
 | `shell.reveal` | `{ path }` | — | write | 资源管理器定位 |

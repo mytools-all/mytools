@@ -2,6 +2,14 @@
 
 状态：公开 API v1 的可执行开发指南，核对日期 2026-11-04。读者只需要本目录、[API 参考](../04-plugin-spec.md)与 [MyTools Demo](https://github.com/mytools-all/mytools-demo) 源码，不需要宿主源码或历史聊天。
 
+## 新手和小模型入口
+
+先读[新手入门](../GETTING-STARTED.md)，再复制[可运行便签模板](templates/mytools-notes/README.md)。模板包含完整入口、加载/保存状态机、失败恢复、离线资源和测试，无需构建宿主或编写 Rust。它是本地教学模板，未发布，复制后应使用自己的身份。
+
+评估 8B 模型请使用[独立开发验收任务](model-evaluation.md)：固定输入与环境，检查数据保护和实际安装，不把已有日历案例当成指定模型的通过记录。
+
+推荐工作区将 mytools、mytools-home、plugins 并列放置，每个插件位于 plugins/<name>。这是源码布局，实际运行位置仍由宿主插件根目录决定。
+
 ## 1. 最小交付物
 
 插件是独立静态网页包，可以用原生 HTML/CSS/JS，也可以构建后交付静态资源。运行时没有 Node.js / Electron / require，也不能直接访问 Tauri、宿主源码、其他插件目录。所有资源使用相对路径，包内自带依赖，不运行时加载 CDN。
@@ -144,7 +152,7 @@ mytools-home/plugins/database.json 中添加 schemaVersion 2 的条目，至少�
 
 交付包含 README（功能、安装、权限、数据与限制）、LICENSE、测试和实际验证记录。对文档驱动开发，先记录所用文档版本，再按文档实现；发现缺项先修文档，重新验证。结果见 [日历验证记录](validation-calendar.md)。
 
-离线整理尚未推送的本地索引时，可在宿主目录执行 `pnpm catalog:sync --file ../plugins/database.json`，与远程同步使用相同的字段校验；无参数仍读取远程索引。
+离线整理尚未推送的本地索引时，在上述同级布局的宿主目录执行 `pnpm catalog:sync --file ../mytools-home/plugins/database.json`，与远程同步使用相同的字段校验；旧 app 嵌套布局的路径为 `../plugins/database.json`。无参数仍读取远程索引。
 
 ## 文本备份与导入确认
 

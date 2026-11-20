@@ -6,7 +6,7 @@
 
 MyTools 是 Windows 插件工具箱，宿主 Tauri 2 + Vue 3 / TypeScript + Pinia + Rust。主页搜索应用和插件，插件中心负责商店、安装、开发与偏好设置；鼠标中键“我的面板”、托盘和悬浮球提供入口。插件可以嵌入主页或分离为窗口。
 
-本地父目录包含 mytools-home 的 README、AGENTS 和 plugins/database.json；app 是 mytools 仓库，各 plugins/<name> 是独立仓库，不是子模块。单独克隆宿主即可构建，克隆索引不会自动下载插件。仓库链接以父目录 README 为准。
+推荐本地工作区并列放置 mytools（宿主）、mytools-home（索引）和 plugins；各 plugins/<name> 是独立仓库，不是子模块。索引在 mytools-home/plugins/database.json。历史资料中的 app 指宿主，旧布局把 app 与插件嵌在索引仓库下。单独克隆宿主即可构建，克隆索引不会自动下载插件。仓库链接见 mytools-home/README.md；新手先读 GETTING-STARTED.md。
 
 ## 实际架构
 
@@ -63,7 +63,7 @@ pnpm dev:install:debug 会重建、替换并重启本机安装版本，验收前
 
 每次交接更新本次改动、运行过的检查、未解决问题和发布状态，避免写机器临时 PID/端口或依赖聊天记录。已有未提交修改应先用 git status / git diff 确认，不能整体覆盖。
 
-离线整理尚未推送的本地索引时，可在宿主目录执行 `pnpm catalog:sync --file ../plugins/database.json`，与远程同步使用相同的字段校验；无参数仍读取远程索引。
+离线整理尚未推送的本地索引时，在上述同级布局的宿主目录执行 `pnpm catalog:sync --file ../mytools-home/plugins/database.json`，与远程同步使用相同的字段校验；旧 app 嵌套布局使用 `../plugins/database.json`。无参数仍读取远程索引。
 
 ## 插件目录主仓库与镜像
 
