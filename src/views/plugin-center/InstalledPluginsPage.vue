@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useToolCatalogStore } from "@/stores/toolCatalog";
 import TopTabNav from "@/components/TopTabNav.vue";
@@ -14,13 +14,17 @@ const props = defineProps<{ detached: boolean }>();
 const emit = defineEmits<{ detail: [name: string] }>();
 const plugins = usePluginsStore();
 const catalog = useToolCatalogStore();
-onMounted(()=>{void plugins.reload();void catalog.refresh();});
+onMounted(()=>{void catalog.initialize();});
 function updateEntry(name:string) { return catalog.updates.find(entry=>entry.name===name); }
 async function checkUpdates(){await Promise.all([plugins.reload(),catalog.refresh(true)]);}
 const usage = useUsageStore();
 const search = useCenterSearchStore();
 const router = useRouter();
 const enableFilter = ref("all");
+const selected=ref(new Set<string>());
+const updating=computed(()=>catalog.updatingAll||!!catalog.busy);
+watch([enableFilter,()=>search.query],()=>{selected.value=new Set();});
+watch(()=>catalog.updates.map(entry=>entry.name),names=>{const available=new Set(names);selected.value=new Set([...selected.value].filter(name=>available.has(name)));});
 const pending = ref<Record<string, boolean>>({});
 const actionError = ref<string | null>(null);
 const pinnedIdSet = computed(() => new Set(usage.pinned));
@@ -54,6 +58,11 @@ const installedPlugins = computed<LoadedPlugin[]>(() => {
   }
   return xs;
 });
+const visibleUpdates=computed(()=>installedPlugins.value.filter(plugin=>!!updateEntry(plugin.manifest.name)));
+const allVisibleSelected=computed(()=>visibleUpdates.value.length>0&&visibleUpdates.value.every(plugin=>selected.value.has(plugin.manifest.name)));
+function selectOne(name:string,checked:boolean){const next=new Set(selected.value);if(checked)next.add(name);else next.delete(name);selected.value=next;}
+function selectVisible(checked:boolean){const next=new Set(selected.value);for(const plugin of visibleUpdates.value){if(checked)next.add(plugin.manifest.name);else next.delete(plugin.manifest.name);}selected.value=next;}
+async function updateSelection(){await catalog.updateSelected([...selected.value]);}
 
 function pluginTitle(p: LoadedPlugin): string {
   return pluginDisplayName(p.manifest);
@@ -123,14 +132,24 @@ async function remove(p: LoadedPlugin) {
 <template>
   <section class="pc__page">
     <input v-if="detached" v-model="search.query" class="pc__search-input pc__installed-search" placeholder="搜索已安装插件…" aria-label="搜索已安装插件" />
-    <div class="pc__row"><button class="pc__btn" :disabled="plugins.loading || catalog.loading" @click="checkUpdates">{{ catalog.loading?'检查中…':'检查更新 / 重新扫描' }}</button><button v-if="catalog.updates.length" class="pc__btn pc__btn--primary" :disabled="!!catalog.busy || catalog.updatingAll" @click="catalog.updateAll()">{{ catalog.updatingAll?'更新中…':`全部更新（${catalog.updates.length}）` }}</button></div>
+    <div class="pc__row"><button class="pc__btn" :disabled="plugins.loading || catalog.loading || updating" @click="checkUpdates">{{ catalog.loading?'检查中…':'检查更新 / 重新扫描' }}</button></div>
     <p v-if="catalog.loadError" class="pc__error">{{ catalog.loadError }}</p><p v-if="catalog.notice" role="status">{{ catalog.notice }}</p><p v-if="catalog.error" class="pc__error">{{ catalog.error }}</p>
     <TopTabNav v-model="enableFilter" :tabs="installTabs" />
+    <div v-if="enableFilter==='updates'" class="pc__row pc__row--wrap update-tools">
+      <label class="pc__settings-toggle"><input type="checkbox" class="pc__checkbox" :checked="allVisibleSelected" :disabled="updating || !visibleUpdates.length" @change="selectVisible(($event.target as HTMLInputElement).checked)">全选当前列表</label>
+      <button class="pc__btn pc__btn--primary" :disabled="updating || !selected.size" @click="updateSelection">更新已选（{{ selected.size }}）</button>
+      <button class="pc__btn" :disabled="updating || !catalog.updates.length" @click="catalog.updateAll()">更新全部（{{ catalog.updates.length }}）</button>
+      <span v-if="catalog.updatingAll" role="status">正在更新 {{ catalog.updateProgress.completed }}/{{ catalog.updateProgress.total }} · {{ catalog.updateProgress.current }}</span>
+    </div>
     <div v-if="plugins.plugins.length === 0 && !plugins.loading" class="pc__empty">
       暂无插件。切换到「开发者」安装工具包，或从本地目录安装。
     </div>
+    <div v-else-if="installedPlugins.length === 0 && !plugins.loading" class="pc__empty">
+      {{ enableFilter === 'updates' ? '当前列表没有可更新的插件。' : '没有匹配的插件。' }}
+    </div>
     <ul v-else class="pc__ilist">
       <li v-for="p in installedPlugins" :key="p.manifest.name" class="pc__iitem" role="button" tabindex="0" @click="emit('detail', p.manifest.name)" @keydown.enter.self="emit('detail', p.manifest.name)" @keydown.space.self.prevent="emit('detail', p.manifest.name)">
+        <input v-if="enableFilter==='updates'" type="checkbox" class="pc__checkbox" :aria-label="'选择更新 '+pluginTitle(p)" :checked="selected.has(p.manifest.name)" :disabled="updating" @click.stop @keydown.stop @change="selectOne(p.manifest.name,($event.target as HTMLInputElement).checked)">
         <span class="pc__iitem-icon">
           <img
             :src="p.icon || fallbackIconDataUri(pluginTitle(p))"
@@ -172,23 +191,23 @@ async function remove(p: LoadedPlugin) {
           <p v-if="p.incompatible" class="pc__iitem-warn">{{ p.incompatible }}</p>
         </div>
         <div class="pc__iactions" @click.stop>
-          <button v-if="updateEntry(p.manifest.name)" class="pc__btn pc__btn--primary" :disabled="!!catalog.busy || !!pending[p.manifest.name]" @click="catalog.install(updateEntry(p.manifest.name)!)">{{ catalog.busy===p.manifest.name?'更新中…':'更新' }}</button>
+          <button v-if="updateEntry(p.manifest.name)" class="pc__btn pc__btn--primary" :disabled="updating || !!pending[p.manifest.name]" @click="catalog.install(updateEntry(p.manifest.name)!)">{{ catalog.busy===p.manifest.name?'更新中…':'更新' }}</button>
           <button
             class="pc__btn pc__btn--primary"
-            :disabled="!p.enabled"
+            :disabled="!p.enabled || updating"
             @click="openPlugin(p)"
           >
             打开
           </button>
-          <button class="pc__btn" :disabled="!!pending[p.manifest.name] || !!catalog.busy" @click="toggle(p)">
+          <button class="pc__btn" :disabled="!!pending[p.manifest.name] || updating" @click="toggle(p)">
             {{ p.enabled ? "停用" : "启用" }}
           </button>
-          <button class="pc__btn" :disabled="!!pending[p.manifest.name] || !!catalog.busy" @click="reveal(p)">
+          <button class="pc__btn" :disabled="!!pending[p.manifest.name] || updating" @click="reveal(p)">
             打开目录
           </button>
           <button
             class="pc__btn pc__btn--danger"
-            :disabled="!!pending[p.manifest.name] || !!catalog.busy"
+            :disabled="!!pending[p.manifest.name] || updating"
             @click="remove(p)"
           >
             卸载

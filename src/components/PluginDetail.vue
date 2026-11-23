@@ -42,15 +42,15 @@ function safeUrl(url?:string){try{const parsed=new URL(url || "");return ["https
         <img :src="installed?.icon || entry?.icon || fallbackIconDataUri(title)" :alt="title" />
         <div class="pd__heading"><h1>{{ title }}</h1><p>{{ entry?.description || installed?.manifest.description }}</p><span>{{ status }} · v{{ installed?.manifest.version || entry?.version }}<template v-if="entry"> · {{ entry.category }}</template></span></div>
         <div class="pd__actions">
-          <button v-if="entry && catalog.canUpdate(entry)" class="pd__primary" :disabled="!!catalog.busy" @click="catalog.install(entry)">{{ catalog.busy===name?'更新中…':`更新至 v${entry.version}` }}</button>
+          <button v-if="entry && catalog.canUpdate(entry)" class="pd__primary" :disabled="!!catalog.busy || catalog.updatingAll" @click="catalog.install(entry)">{{ catalog.busy===name?'更新中…':`更新至 v${entry.version}` }}</button>
           <button v-if="installed" class="pd__primary" :disabled="!installed.enabled || !!installed.incompatible || !installed.manifest.features.length" @click="openPlugin">打开</button>
-          <button v-else-if="entry?.status === 'ready'" class="pd__primary" :disabled="catalog.busy === name" @click="catalog.install(entry)">{{ catalog.busy === name ? '安装中…' : '安装' }}</button>
-          <button v-if="installed" :disabled="pending || !!catalog.busy" @click="run(()=>plugins.setEnabled(name,!installed?.enabled))">{{ installed.enabled ? '停用' : '启用' }}</button>
-          <button v-if="installed" :disabled="pending || !!catalog.busy" @click="run(()=>plugins.openDir(name))">打开目录</button>
-          <button v-if="installed" class="pd__uninstall" :disabled="pending || !!catalog.busy" @click="confirmUninstall=true">卸载</button>
+          <button v-else-if="entry?.status === 'ready'" class="pd__primary" :disabled="!!catalog.busy || catalog.updatingAll" @click="catalog.install(entry)">{{ catalog.busy === name ? '安装中…' : '安装' }}</button>
+          <button v-if="installed" :disabled="pending || !!catalog.busy || catalog.updatingAll" @click="run(()=>plugins.setEnabled(name,!installed?.enabled))">{{ installed.enabled ? '停用' : '启用' }}</button>
+          <button v-if="installed" :disabled="pending || !!catalog.busy || catalog.updatingAll" @click="run(()=>plugins.openDir(name))">打开目录</button>
+          <button v-if="installed" class="pd__uninstall" :disabled="pending || !!catalog.busy || catalog.updatingAll" @click="confirmUninstall=true">卸载</button>
         </div>
       </header>
-      <div v-if="confirmUninstall && installed" class="pd__confirm" role="group" aria-label="确认卸载插件"><p>确认卸载 {{ title }}？只移除插件程序，保留插件存储的数据。</p><button :disabled="pending || !!catalog.busy" @click="confirmUninstall=false">取消</button><button class="pd__uninstall" :disabled="pending || !!catalog.busy" @click="uninstallPlugin">{{ pending ? '卸载中…' : '确认卸载' }}</button></div>
+      <div v-if="confirmUninstall && installed" class="pd__confirm" role="group" aria-label="确认卸载插件"><p>确认卸载 {{ title }}？只移除插件程序，保留插件存储的数据。</p><button :disabled="pending || !!catalog.busy || catalog.updatingAll" @click="confirmUninstall=false">取消</button><button class="pd__uninstall" :disabled="pending || !!catalog.busy || catalog.updatingAll" @click="uninstallPlugin">{{ pending ? '卸载中…' : '确认卸载' }}</button></div>
       <p v-if="notice || catalog.notice" role="status">{{ notice || catalog.notice }}</p>
       <p v-if="error || catalog.error" class="pd__error" role="alert">{{ error || catalog.error }}</p>
       <p v-if="installed?.incompatible" class="pd__error">{{ installed.incompatible }}</p>

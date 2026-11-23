@@ -1,6 +1,6 @@
 [package]
 name = "mytools"
-version = "0.1.0"
+version = "0.2.0"
 description = "Lightweight plugin toolbox"
 authors = ["MyTools Contributors"]
 license = "MIT"
@@ -53,6 +53,7 @@ ureq = "2"
 tiny_http = "0.12"
 sysinfo = "0.31"
 image = { version = "0.25", default-features = false, features = ["png"] }
+semver = "1"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = [
@@ -91,6 +92,8 @@ windows = { version = "0.57", features = [
 windows-core = "0.57"
 image = { version = "0.25", default-features = false, features = ["png"] }
 xz2 = { version = "0.1.7", features = ["static"] }
+tauri-plugin-autostart = "2"
+tauri-plugin-updater = "2"
 
 [dev-dependencies]
 tempfile = "3"

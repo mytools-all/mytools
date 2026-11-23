@@ -26,3 +26,5 @@ pub mod tray;
 pub mod window;
 
 pub mod resources;
+
+pub mod app_updates;

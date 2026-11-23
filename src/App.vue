@@ -12,6 +12,7 @@ import type { SearchResult } from "@/stores/search";
 import { useResultActions } from "@/composables/useResultActions";
 import { useAppShell } from "@/composables/useAppShell";
 import CapabilityConsentDialog from "@/components/CapabilityConsentDialog.vue";
+import AppUpdateReminder from "@/components/AppUpdateReminder.vue";
 
 const active = useActivePluginStore();
 const router = useRouter();
@@ -84,6 +85,7 @@ onBeforeUnmount(() => {
     <WindowResizeHandles />
   </div>
   <CapabilityConsentDialog />
+  <AppUpdateReminder v-if="!isFloatballWindow && !isPluginWindow && !isPanelWindow" />
 </template>
 
 <style>

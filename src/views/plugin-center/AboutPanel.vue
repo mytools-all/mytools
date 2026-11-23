@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useCatalogSourcesStore } from "@/stores/catalogSources";
+import AppUpdateStatus from "@/components/AppUpdateStatus.vue";
 import { APP_INFO } from "@/config/app";
 import { tauriAvailable } from "@/lib/tauri";
 import appIcon from "../../../src-tauri/icons/128x128.png";
@@ -30,7 +31,7 @@ async function openLink(event: MouseEvent, url: string) {
     <dl class="about__info">
       <dt>作者</dt>
       <dd><a :href="APP_INFO.authorUrl" target="_blank" rel="noopener noreferrer" @click="openLink($event, APP_INFO.authorUrl)">{{ APP_INFO.author }} ↗</a></dd>
-      <dt>当前版本</dt><dd>{{ APP_INFO.version }}</dd>
+      <dt>当前版本</dt><dd><AppUpdateStatus compact /></dd>
       <dt>支持平台</dt><dd>{{ APP_INFO.platform }}</dd>
       <dt>开源许可</dt><dd>{{ APP_INFO.license }}</dd>
       <dt>项目仓库</dt>

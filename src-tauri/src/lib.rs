@@ -53,6 +53,13 @@ pub fn run() {
         })
         .setup(bootstrap::setup)
         .invoke_handler(tauri::generate_handler![
+            commands::app_updates::app_update_status,
+            commands::app_updates::app_update_check,
+            commands::app_updates::app_update_set_mode,
+            commands::app_updates::app_update_download,
+            commands::app_updates::app_update_install,
+            commands::app_updates::app_autostart_status,
+            commands::app_updates::app_autostart_set,
             commands::resources::resources_snapshot,
             commands::resources::resources_storage,
             commands::panel::panel_show,

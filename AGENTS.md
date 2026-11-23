@@ -1,4 +1,4 @@
-# AGENTS.md — MyTools 0.1.0
+# AGENTS.md — MyTools 0.2.0
 
 Windows 宿主，Tauri 2 + Vue 3 + Rust。只维护平台和能力，插件均为独立仓库与 npm 包，不在本仓库中保存源码或播种到二进制。
 

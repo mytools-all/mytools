@@ -53,7 +53,7 @@ describe("plugin details",()=>{
     wrapper.unmount();
   });
   it("keeps the installed plugin and shows uninstall errors",async()=>{
-    const plugin: LoadedPlugin={manifest:{name:"mytools-search",description:"search",main:"index.html",version:"0.1.0",features:[{code:"run",explain:"运行",cmds:[]}]},enabled:true,origin:"custom",declaredCapabilities:[],dir:"fixture",mainUrl:"https://example.com/index.html"};
+    const plugin: LoadedPlugin={manifest:{name:"mytools-search",description:"search",main:"index.html",version:"0.1.1",features:[{code:"run",explain:"运行",cmds:[]}]},enabled:true,origin:"custom",declaredCapabilities:[],dir:"fixture",mainUrl:"https://example.com/index.html"};
     const {wrapper}=await setup("mytools-search",plugin);
     const plugins=usePluginsStore();
     vi.spyOn(plugins,"uninstall").mockImplementation(async()=>{plugins.error="file locked";return false;});

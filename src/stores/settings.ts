@@ -20,7 +20,7 @@ export const SETTINGS_CATEGORIES: ReadonlyArray<{
   key: SettingsCategory;
   label: string;
 }> = [
-  { key: "appearance", label: "外观" },
+  { key: "appearance", label: "常规选项" },
   { key: "plugins", label: "插件" },
   { key: "data", label: "目录授权" },
   { key: "shortcuts", label: "快捷键" },

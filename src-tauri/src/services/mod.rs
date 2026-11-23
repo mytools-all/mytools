@@ -13,3 +13,5 @@ pub mod screenshot;
 
 pub mod resources;
 pub mod resource_storage;
+
+pub mod app_updates;

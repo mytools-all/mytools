@@ -9,6 +9,7 @@ import ResourceManagerPage from "./plugin-center/ResourceManagerPage.vue";
 import PluginPreferencesPage from "./plugin-center/PluginPreferencesPage.vue";
 import { usePluginsStore } from "@/stores/plugins";
 import { useSettingsStore } from "@/stores/settings";
+import { useToolCatalogStore } from "@/stores/toolCatalog";
 import { safeInvoke, tauriAvailable, isDetachedCenter } from "@/lib/tauri";
 
 type Section = "store" | "installed" | "dev" | "resources" | "settings";
@@ -23,6 +24,7 @@ const route = useRoute();
 const router = useRouter();
 const plugins = usePluginsStore();
 const settings = useSettingsStore();
+const catalog = useToolCatalogStore();
 const detached = isDetachedCenter();
 const section = computed<Section>(() => {
   const value = route.query.section;
@@ -38,7 +40,7 @@ function layout(width: number, height: number) {
 }
 onMounted(() => {
   layout(1024,760);
-  void Promise.allSettled([settings.init(), plugins.ensureLoaded()]);
+  void Promise.allSettled([settings.init(), plugins.ensureLoaded(),catalog.initialize()]);
 });
 onBeforeUnmount(() => { layout(720,480); });
 </script>

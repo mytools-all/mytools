@@ -36,6 +36,16 @@ pub enum Theme {
     Dark,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum UpdateMode {
+    Disabled,
+    Download,
+    #[default]
+    #[serde(other)]
+    Notify,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
@@ -52,6 +62,8 @@ pub struct AppSettings {
     pub middle_panel_enabled: bool,
     #[serde(default)]
     pub theme: Theme,
+    #[serde(default)]
+    pub update_mode: UpdateMode,
     #[serde(default = "default_hotkey")]
     pub hotkey: String,
     #[serde(default)]
@@ -91,6 +103,7 @@ impl Default for AppSettings {
             floatball_enabled: false,
             middle_panel_enabled: true,
             theme: Theme::default(),
+            update_mode: UpdateMode::default(),
             hotkey: default_hotkey(),
             pinned_plugins: Vec::new(),
             recent_plugins: Vec::new(),
@@ -126,9 +139,27 @@ impl Clone for SettingsState {
 }
 
 impl SettingsState {
-    pub fn set_catalog_sources(&self, sources: crate::services::catalog::CatalogSources) -> Result<(), String> {
+    pub fn set_update_mode(&self, mode: UpdateMode) -> Result<(), String> {
+        let mut inner = self.inner.write().map_err(|e| e.to_string())?;
+        let mut next = inner.clone();
+        next.update_mode = mode;
+        if let Some(parent) = self.path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        let bytes = serde_json::to_vec_pretty(&next).map_err(|e| e.to_string())?;
+        std::fs::write(&self.path, bytes).map_err(|e| e.to_string())?;
+        *inner = next;
+        Ok(())
+    }
+    pub fn set_catalog_sources(
+        &self,
+        sources: crate::services::catalog::CatalogSources,
+    ) -> Result<(), String> {
         sources.validate()?;
-        self.inner.write().map_err(|e| e.to_string())?.catalog_sources = sources;
+        self.inner
+            .write()
+            .map_err(|e| e.to_string())?
+            .catalog_sources = sources;
         self.save()
     }
     pub fn set_middle_panel_enabled(&self, enabled: bool) -> Result<(), String> {
@@ -255,6 +286,32 @@ impl SettingsState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn update_preferences_migrate_and_persist() {
+        let legacy: AppSettings = serde_json::from_str(r#"{"theme":"dark"}"#).expect("legacy");
+        assert_eq!(legacy.update_mode, UpdateMode::Notify);
+        let unknown: AppSettings =
+            serde_json::from_str(r#"{"updateMode":"future"}"#).expect("unknown mode");
+        assert_eq!(unknown.update_mode, UpdateMode::Notify);
+        let dir = tempfile::TempDir::new().expect("temp");
+        let state = SettingsState::load(settings_path(dir.path()));
+        state.set_update_mode(UpdateMode::Disabled).expect("save");
+        assert_eq!(
+            SettingsState::load(settings_path(dir.path()))
+                .get()
+                .update_mode,
+            UpdateMode::Disabled
+        );
+    }
+
+    #[test]
+    fn failed_update_preference_save_preserves_memory() {
+        let dir = tempfile::TempDir::new().expect("temp");
+        let state = SettingsState::load(dir.path().to_path_buf());
+        assert!(state.set_update_mode(UpdateMode::Download).is_err());
+        assert_eq!(state.get().update_mode, UpdateMode::Notify);
+    }
 
     #[test]
     fn defaults_include_new_fields() {

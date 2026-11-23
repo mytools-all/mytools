@@ -34,3 +34,6 @@ coverage/
 .npmrc
 .env*
 *.tgz
+
+release-artifacts/
+*.key

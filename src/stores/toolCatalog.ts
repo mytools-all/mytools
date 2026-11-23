@@ -27,6 +27,8 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
   } catch { source.value = "snapshot"; }
   let refreshPromise: Promise<void> | null = null;
   let lastAttempt = 0;
+  let startupPromise: Promise<void> | null = null;
+  let startupChecked = false;
   const category = ref<string>("all");
   const query = ref("");
   const busy = ref<string | null>(null);
@@ -81,14 +83,33 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
   }
   const updates=computed(()=>entries.value.filter(canUpdate));
   const updatingAll=ref(false);
-  async function updateAll() {
+  const updateProgress=ref({completed:0,total:0,current:""});
+  function initialize():Promise<void> {
+    if(startupChecked)return startupPromise??Promise.resolve();
+    startupChecked=true;
+    startupPromise=(async()=>{await plugins.reload();await refresh(true);})().finally(()=>{startupPromise=null;});
+    return startupPromise;
+  }
+  async function updateSelected(names: readonly string[]) {
+    const selected=new Set(names);
+    await updateEntries(updates.value.filter(entry=>selected.has(entry.name)));
+  }
+  async function updateAll() { await updateEntries([...updates.value]); }
+  async function updateEntries(entries:ToolEntry[]) {
     if(updatingAll.value||busy.value)return;
+    if(!entries.length){notice.value="没有需要更新的插件";return;}
     updatingAll.value=true;
     const failures:string[]=[];let count=0;
+    updateProgress.value={completed:0,total:entries.length,current:""};
     try {
-      for(const entry of [...updates.value]) { if(await install(entry))count++;else failures.push(entry.title); }
+      for(const entry of entries) {
+        updateProgress.value.current=entry.title;
+        if(await runInstall(entry))count++;else failures.push(entry.title+"："+(error.value||"更新失败"));
+        updateProgress.value.completed++;
+      }
       notice.value=`已更新 ${count} 个插件${failures.length?`，失败 ${failures.length} 个：${failures.join("、")}`:""}`;
-    } finally { updatingAll.value=false; }
+      error.value=failures.length?failures.join("；"):null;
+    } finally { updatingAll.value=false;updateProgress.value.current=""; }
   }
   function stateOf(entry: ToolEntry): ToolInstallState {
     if (canUpdate(entry)) return "updateable";
@@ -117,6 +138,10 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
   });
 
   async function install(entry: ToolEntry): Promise<string | null> {
+    if(updatingAll.value)return null;
+    return runInstall(entry);
+  }
+  async function runInstall(entry: ToolEntry): Promise<string | null> {
     if (busy.value) return null;
     if (!tauriAvailable()) {
       error.value = "非桌面环境无法安装插件";
@@ -166,6 +191,9 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
     canUpdate,
     updates,
     updateAll,
+    updateSelected,
+    updateProgress,
+    initialize,
     updatingAll,
     install,
     refresh,

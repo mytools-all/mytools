@@ -7,6 +7,7 @@
 //! `Origin::Custom` unless they match a shipped official package name.
 
 use std::io::Read;
+use tauri::Manager;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -166,6 +167,8 @@ pub async fn plugin_update_npm(
         if requested.as_deref() != Some(version.as_str()) || !is_safe_plugin_name(&code) {
             return Err("更新必须指定确定的插件身份和版本".to_string());
         }
+        let sessions=app.state::<crate::runtime::PluginSessions>();
+        let _lease=sessions.begin_update(&code)?;
         let tarball = resolve_tarball(&package, &requested)?;
         let tmp = download_tarball(&tarball)?;
         let result = registry.update_pack(&tmp, &code, &from_version, &version);

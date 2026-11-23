@@ -195,6 +195,33 @@ describe("catalog plugin updates",()=>{
  });
 });
 
+it("checks once per store session even when multiple pages mount together", async () => {
+ setActivePinia(createPinia()); invokeMock.mockReset();
+ invokeMock.mockImplementation(async command => command === "plugin_list" ? [] : command === "plugin_catalog_fetch" ? snapshot : null);
+ const catalog=useToolCatalogStore();
+ await Promise.all([catalog.initialize(),catalog.initialize()]);
+ await catalog.initialize();
+ expect(invokeMock.mock.calls.filter(([command])=>command==="plugin_catalog_fetch")).toHaveLength(1);
+});
+
+it("updates only selected eligible plugins and blocks overlapping installs",async()=>{
+ setActivePinia(createPinia()); invokeMock.mockReset();
+ const {usePluginsStore}=await import("@/stores/plugins");
+ const plugins=usePluginsStore(),catalog=useToolCatalogStore();
+ const entries=TOOL_CATALOG.filter(entry=>entry.status==="ready").slice(0,2).map(entry=>({...entry,version:"9.0.0",npmSpec:entry.npm+"@9.0.0"}));
+ plugins.plugins=entries.map(entry=>({manifest:{name:entry.name,version:"0.1.0"}} as LoadedPlugin));catalog.entries=entries;
+ let finish:((value:string)=>void)|undefined;
+ invokeMock.mockImplementation(async command=>command==="plugin_update_npm"?new Promise<string>(resolve=>{finish=resolve;}):plugins.plugins);
+ const update=catalog.updateSelected([entries[0]!.name,"unknown"]);
+ expect(catalog.updatingAll).toBe(true);
+ expect(await catalog.install(entries[1]!)).toBeNull();
+ await catalog.updateAll();
+ expect(invokeMock.mock.calls.filter(([command])=>command==="plugin_update_npm")).toHaveLength(1);
+ finish?.(entries[0]!.name);await update;
+ expect(catalog.updateProgress).toEqual({completed:1,total:1,current:""});
+ expect(catalog.updatingAll).toBe(false);
+});
+
 it("batch updates continue after one failure and report the result",async()=>{
  setActivePinia(createPinia());localStorage.clear();invokeMock.mockReset();
  const {usePluginsStore}=await import("@/stores/plugins");const plugins=usePluginsStore(),catalog=useToolCatalogStore();

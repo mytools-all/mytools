@@ -10,7 +10,7 @@ const store = useToolCatalogStore();
 const plugins = usePluginsStore();
 withDefaults(defineProps<{sharedSearch?: boolean}>(), {sharedSearch:false});
 const emit = defineEmits<{detail:[name:string]}>();
-onMounted(() => { void store.refresh(); });
+onMounted(() => { void store.initialize(); });
 
 const tabs = computed(() => [
   { id: "all", label: "全部", count: store.visibleEntries.length },
@@ -53,8 +53,6 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
         spellcheck="false"
         placeholder="搜索工具…"
       />
-      <button class="tc__btn" :disabled="store.loading" @click="store.refresh(true)">{{ store.loading ? '更新中…' : '检查更新' }}</button>
-      <button v-if="store.updates.length" class="tc__btn" :disabled="!!store.busy || store.updatingAll" @click="store.updateAll()">{{ store.updatingAll ? '更新中…' : `全部更新（${store.updates.length}）` }}</button>
     </div>
     <TopTabNav v-model="store.category as unknown as string" :tabs="tabs" />
     <p v-if="store.loadError" class="tc__banner" role="status">{{ store.loadError }}</p>
@@ -92,7 +90,7 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
           <button
             v-if="['installable','updateable'].includes(store.stateOf(entry))"
             class="tc__btn tc__btn--primary"
-            :disabled="!!store.busy"
+            :disabled="!!store.busy || store.updatingAll"
             @click.stop="onInstall(entry)"
           >
             {{ store.busy === entry.name ? "处理中…" : store.canUpdate(entry) ? "更新" : "安装" }}

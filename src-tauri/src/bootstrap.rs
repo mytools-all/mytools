@@ -5,6 +5,11 @@ use std::sync::Arc;
 use tauri::{Listener, Manager};
 
 pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    #[cfg(windows)]
+    {
+        app.handle().plugin(tauri_plugin_autostart::Builder::new().app_name("MyTools").arg("--autostart").build())?;
+        app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+    }
     let (config_root, data_root) = initialize_storage(app);
     tracing::info!("MyTools starting up");
     crate::services::apps::index::warm();
@@ -14,6 +19,7 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     initialize_health(app);
     initialize_desktop(app, &settings);
     initialize_file_drop(app.handle());
+    crate::services::app_updates::initialize(app.handle());
     if let Err(error) = commands::panel::initialize(app.handle(), settings.get().middle_panel_enabled) {
         tracing::warn!("middle panel unavailable: {error}");
     }

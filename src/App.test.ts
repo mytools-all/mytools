@@ -6,6 +6,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import App from "@/App.vue";
 import { useSettingsStore } from "@/stores/settings";
+vi.mock("@/components/AppUpdateReminder.vue", () => ({ default: { template: "<div />" } }));
 
 const {
   invokeMock,

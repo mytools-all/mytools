@@ -5,6 +5,7 @@ import TopTabNav from "@/components/TopTabNav.vue";
 import GrantBrowser from "@/components/GrantBrowser.vue";
 import CatalogSourcesPanel from "./CatalogSourcesPanel.vue";
 import AboutPanel from "./AboutPanel.vue";
+import GeneralUpdateSettings from "@/components/GeneralUpdateSettings.vue";
 import { usePluginsStore } from "@/stores/plugins";
 import { useGrantsStore } from "@/stores/grants";
 import { useDirGrantsStore } from "@/stores/dirGrants";
@@ -39,7 +40,7 @@ const settingsTabs = computed(() =>
   })),
 );
 const SETTINGS_KEYWORDS: Record<SettingsCategory, string[]> = {
-  appearance: ["外观", "主题", "深色", "浅色", "托盘", "悬浮球", "theme", "tray", "floatball"],
+  appearance: ["常规", "开机自启", "启动", "检查更新", "自动更新", "外观", "主题", "深色", "浅色", "托盘", "悬浮球", "theme", "tray", "floatball"],
   plugins: ["插件", "目录", "安装", "扫描", "plugin", "root", "install"],
   data: ["目录授权", "授权", "目录", "grant", "permission", "access"],
   shortcuts: ["快捷键", "唤起", "热键", "hotkey", "shortcut"],
@@ -113,6 +114,7 @@ async function rescan() {
       </p>
 
       <template v-if="settings.settingsCategory === 'appearance'">
+        <GeneralUpdateSettings />
         <div class="pc__settings-block">
           <h4 class="pc__side-h">主题</h4>
           <div class="pc__row pc__row--wrap">
@@ -245,16 +247,7 @@ async function rescan() {
   gap: 6px;
 }
 
-.pc__settings-block {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 18px;
-  background: var(--surface-bg);
-  border: 1px solid var(--panel-control-border);
-  border-radius: 10px;
-}
+
 
 .pc__section-head,.pc__section-head>div { display:flex; align-items:center; gap:12px; }
 
@@ -264,20 +257,9 @@ async function rescan() {
 
 .pc__settings-block > .pc__hint { margin:0; line-height:1.6; }
 
-.pc__settings-toggle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
 
-.pc__checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
-  cursor: pointer;
-  flex: none;
-}
+
+
 
 .pc__choice {
   display: flex;

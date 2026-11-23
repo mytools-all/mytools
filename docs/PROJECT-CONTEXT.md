@@ -1,6 +1,6 @@
 # MyTools 项目上下文
 
-状态：实现说明，核对日期 2026-11-20。本文是跨 AI 工具的起点；不包含账号、机器私有路径、令牌或用户数据。
+状态：实现说明，核对日期 2026-11-23。本文是跨 AI 工具的起点；不包含账号、机器私有路径、令牌或用户数据。
 
 ## 项目与仓库
 
@@ -28,6 +28,8 @@ MyTools 是 Windows 插件工具箱，宿主 Tauri 2 + Vue 3 / TypeScript + Pini
 插件目录由本地 HTTP 服务提供，宿主注入 window.mytools 桥接，插件始终处于 iframe 中。消息绑定窗口、来源、插件身份及会话，再进入能力注册表与授权策略。独立窗口也不等于插件可以调用 Tauri。Rubick/uTools 只作为功能和交互参考，不兼容其 Electron API。
 
 商店信息维护在 mytools-home/plugins/database.json（schemaVersion 2）；宿主异步读取远程索引，失败使用有效缓存或 src/data/catalogSnapshot.json。快照用 pnpm catalog:sync 生成。npm 分发安装包；plugin.json 决定运行时身份与实际能力。索引介绍不会授予权限。
+
+0.2.0 增加“常规选项”、实际开机自启状态和主程序更新。主程序默认启动检查并提醒，自动下载后仍需确认安装；不依赖 GitHub CLI 或用户登录。插件中心启动检查一次，“已安装 → 可更新”提供选择更新和全部更新，运行中的插件禁止覆盖。签名与发布步骤见 [更新说明](host-updates.md)，私钥不入仓库。本次先本地验收，未发布主程序新 Release。
 
 ## 运行与验证
 

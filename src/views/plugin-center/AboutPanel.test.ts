@@ -6,8 +6,9 @@ import { APP_INFO } from "@/config/app";
 import AboutPanel from "./AboutPanel.vue";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => null) }));
+vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/plugin-opener", () => ({openUrl:vi.fn(async () => {})}));
-vi.mock("@/lib/tauri", () => ({tauriAvailable:() => true}));
+vi.mock("@/lib/tauri", () => ({tauriAvailable:() => true, safeInvoke:vi.fn(async () => null)}));
 
 describe("AboutPanel", () => {
   beforeEach(() => { setActivePinia(createPinia()); vi.mocked(openUrl).mockReset(); });

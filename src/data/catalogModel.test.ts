@@ -13,8 +13,8 @@ describe("catalog index validation", () => {
     expect(demo.npmSpec).toBe("@mytools-all/mytools-demo@0.1.1");
     const calendar = entries.find(entry => entry.name === "mytools-calendar")!;
     expect(calendar.status).toBe("ready");
-    expect(calendar.npmSpec).toBe("@mytools-all/mytools-calendar@0.1.0");
-    expect(calendar.capabilities).toEqual(["storage.get", "storage.set", "net.fetch", "shell.open"]);
+    expect(calendar.npmSpec).toBe(`@mytools-all/mytools-calendar@${calendar.version}`);
+    expect(calendar.capabilities).toEqual(["storage.get", "storage.set", "net.fetch", "shell.open", "fs.exporttext"]);
   });
   it("rejects duplicate identities and executable or ambiguous install sources", () => {
     expect(() => parseToolCatalog({...snapshot, plugins: [snapshot.plugins[0], snapshot.plugins[0]]})).toThrow();
