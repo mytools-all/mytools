@@ -7,7 +7,6 @@ use tauri::{Listener, Manager};
 pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(windows)]
     {
-        app.handle().plugin(tauri_plugin_autostart::Builder::new().app_name("MyTools").arg("--autostart").build())?;
         app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
     }
     let (config_root, data_root) = initialize_storage(app);

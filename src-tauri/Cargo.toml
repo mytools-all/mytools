@@ -81,6 +81,7 @@ windows = { version = "0.57", features = [
     "Win32_System_SystemServices",
     "Win32_System_Variant",
     "Win32_System_Com",
+    "Win32_System_TaskScheduler",
     "Win32_UI_Shell",
     "Win32_UI_Shell_PropertiesSystem",
     "Win32_UI_WindowsAndMessaging",
@@ -92,7 +93,6 @@ windows = { version = "0.57", features = [
 windows-core = "0.57"
 image = { version = "0.25", default-features = false, features = ["png"] }
 xz2 = { version = "0.1.7", features = ["static"] }
-tauri-plugin-autostart = "2"
 tauri-plugin-updater = "2"
 
 [dev-dependencies]

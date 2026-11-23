@@ -57,8 +57,7 @@ pub fn app_autostart_status(window: tauri::Window) -> Result<bool, String> {
     trusted(&window)?;
     #[cfg(windows)]
     {
-        use tauri_plugin_autostart::ManagerExt;
-        window.autolaunch().is_enabled().map_err(|e| e.to_string())
+        crate::infrastructure::autostart::is_enabled()
     }
     #[cfg(not(windows))]
     Err("当前平台暂不支持开机自启".into())
@@ -69,15 +68,7 @@ pub fn app_autostart_set(window: tauri::Window, enabled: bool) -> Result<bool, S
     trusted(&window)?;
     #[cfg(windows)]
     {
-        use tauri_plugin_autostart::ManagerExt;
-        let manager = window.autolaunch();
-        if enabled {
-            manager.enable()
-        } else {
-            manager.disable()
-        }
-        .map_err(|e| e.to_string())?;
-        manager.is_enabled().map_err(|e| e.to_string())
+        crate::infrastructure::autostart::set_enabled(enabled)
     }
     #[cfg(not(windows))]
     {
