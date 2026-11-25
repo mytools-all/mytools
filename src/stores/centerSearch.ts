@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { persistedUiValue } from "@/stores/uiState";
 
 export const useCenterSearchStore = defineStore("centerSearch", () => {
-  const query = ref("");
+  const query = persistedUiValue("center.query", "", (value):value is string=>typeof value==="string");
   return { query };
 });

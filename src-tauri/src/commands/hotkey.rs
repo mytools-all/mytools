@@ -69,6 +69,7 @@ pub async fn hotkey_register(
     *guard = parsed;
     drop(guard);
     settings.set_hotkey(combo.clone())?;
+    crate::services::backups::audit(&app, "settings.hotkey", None, true);
     tracing::info!("global shortcut changed to {combo}");
     Ok(())
 }

@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
-import { useLocalStorage } from "@vueuse/core";
+import { persistedUiValue } from "@/stores/uiState";
 import type { LoadedPlugin } from "@/stores/plugins";
 import { pluginDisplayName } from "@/lib/pluginPresentation";
 import { validPanelEntry, type PanelEntry } from "@/lib/panelEntries";
 
 export const usePanelStore = defineStore("panel", () => {
-  const entries = useLocalStorage<PanelEntry[]>("mytools-panel-entries-v1", []);
+  const entries = persistedUiValue<PanelEntry[]>("panel.entries", [], (value):value is PanelEntry[]=>Array.isArray(value)&&value.every(validPanelEntry));
   function hasPlugin(plugin: string, feature?: string) {
     return Array.isArray(entries.value) && entries.value.some(e => validPanelEntry(e) && e.kind === "plugin" && e.target === plugin && (!feature || e.feature === feature));
   }

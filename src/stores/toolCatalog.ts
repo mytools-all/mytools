@@ -1,4 +1,6 @@
+import { persistedUiValue } from "@/stores/uiState";
 import { comparePluginVersions } from "@/lib/pluginVersion";
+import { pluginCompatibility } from "@/lib/pluginCompatibility";
 import { useCatalogSourcesStore } from "@/stores/catalogSources";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
@@ -29,8 +31,8 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
   let lastAttempt = 0;
   let startupPromise: Promise<void> | null = null;
   let startupChecked = false;
-  const category = ref<string>("all");
-  const query = ref("");
+  const category = persistedUiValue("catalog.category", "all", (value):value is string=>typeof value==="string");
+  const query = persistedUiValue("catalog.query", "", (value):value is string=>typeof value==="string");
   const busy = ref<string | null>(null);
   const error = ref<string | null>(null);
   const notice = ref<string | null>(null);
@@ -79,7 +81,7 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
   function installedVersion(name: string) { return plugins.plugins.find(p=>p.manifest.name===name)?.manifest.version; }
   function canUpdate(entry: ToolEntry) {
     const current=installedVersion(entry.name);
-    return !!current && entry.status==="ready" && !!entry.npmSpec && comparePluginVersions(entry.version,current)===1;
+    return !!current && entry.status==="ready" && !!entry.npmSpec && pluginCompatibility(entry).compatible && comparePluginVersions(entry.version,current)===1;
   }
   const updates=computed(()=>entries.value.filter(canUpdate));
   const updatingAll=ref(false);
@@ -143,6 +145,8 @@ export const useToolCatalogStore = defineStore("toolCatalog", () => {
   }
   async function runInstall(entry: ToolEntry): Promise<string | null> {
     if (busy.value) return null;
+    const compatibility=pluginCompatibility(entry);
+    if(!compatibility.compatible){error.value=compatibility.message;return null;}
     if (!tauriAvailable()) {
       error.value = "非桌面环境无法安装插件";
       return null;

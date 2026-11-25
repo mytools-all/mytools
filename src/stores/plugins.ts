@@ -27,6 +27,7 @@ export interface PluginManifest {
   features: PluginFeature[];
   /** Minimum host API version the plugin needs. */
   apiVersion?: number;
+  engines?: Record<string, string>;
   /** Declared source hint; the host decides the effective origin. */
   origin?: string;
   /** Capabilities the plugin declares it needs. */

@@ -11,8 +11,8 @@ pub mod dir_grants;
 pub mod floatball;
 pub mod health;
 pub mod hotkey;
-pub mod panel;
 pub mod migration;
+pub mod panel;
 pub mod ping;
 pub mod plugin;
 pub mod plugin_npm;
@@ -28,3 +28,7 @@ pub mod window;
 pub mod resources;
 
 pub mod app_updates;
+
+pub mod window_layout;
+
+pub mod backups;

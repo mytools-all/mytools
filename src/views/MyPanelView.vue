@@ -36,6 +36,7 @@ import { movePanelEntry, validPanelEntry, type PanelEntry } from "@/lib/panelEnt
 import { useSettingsStore } from "@/stores/settings";
 import { listen } from "@tauri-apps/api/event";
 import { pluginDisplayName } from "@/lib/pluginPresentation";
+import { useUiStateStore } from "@/stores/uiState";
 
 const plugins = usePluginsStore();
 const settings = useSettingsStore();
@@ -122,9 +123,10 @@ onMounted(async () => {
   await plugins.ensureLoaded();
   if (tauriAvailable()) unlistenShown = await listen("panel:shown",()=>{if(!capturing.value)void refreshPanel();});
   void apps.ensureLoaded();
+  const savedEntries = useUiStateStore().values["panel.entries"] !== undefined;
   if (!Array.isArray(entries.value)) entries.value = [];
   entries.value = entries.value.filter(validPanelEntry);
-  if (!localStorage.getItem("mytools-panel-initialized-v1") && !entries.value.length) entries.value = pluginOptions.value.slice(0, 8).map(option => {
+  if (!savedEntries && !localStorage.getItem("mytools-panel-initialized-v1") && !entries.value.length) entries.value = pluginOptions.value.slice(0, 8).map(option => {
     const [target, feature] = option.target.split(":");
     return {id:crypto.randomUUID(), title:option.title, kind:"plugin" as const, target:target || "", feature};
   });

@@ -1,6 +1,8 @@
+import { persistedUiValue } from "@/stores/uiState";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { tauriAvailable } from "@/lib/tauri";
 import {
   clearLegacyPreferences,
@@ -14,6 +16,7 @@ export type SettingsCategory =
   | "plugins"
   | "data"
   | "shortcuts"
+  | "backup"
   | "about";
 
 export const SETTINGS_CATEGORIES: ReadonlyArray<{
@@ -24,6 +27,7 @@ export const SETTINGS_CATEGORIES: ReadonlyArray<{
   { key: "plugins", label: "插件" },
   { key: "data", label: "目录授权" },
   { key: "shortcuts", label: "快捷键" },
+  { key: "backup", label: "备份与恢复" },
   { key: "about", label: "关于" },
 ];
 
@@ -67,7 +71,8 @@ export const useSettingsStore = defineStore("settings", () => {
   const loading = ref(false);
   const saving = ref(false);
   const message = ref<string | null>(null);
-  const settingsCategory = ref<SettingsCategory>("appearance");
+  const settingsCategory = persistedUiValue<SettingsCategory>("preferences.category", "appearance", (value):value is SettingsCategory=>SETTINGS_CATEGORIES.some(category=>category.key===value));
+  let themeListening: Promise<void> | null = null;
 
   function applyTheme() {
     applyDocumentTheme(theme.value);
@@ -132,6 +137,10 @@ export const useSettingsStore = defineStore("settings", () => {
 
   async function init() {
     if (tauriAvailable()) {
+      themeListening ??= listen<Theme>("settings:theme", event => {
+        if (["system", "light", "dark"].includes(event.payload)) { theme.value = event.payload; applyTheme(); }
+      }).then(() => undefined).catch(() => { themeListening = null; });
+      await themeListening;
       await migrateLegacyPreferences();
       loading.value = true;
       try {

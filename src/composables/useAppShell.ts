@@ -10,7 +10,7 @@ import { reportSystemError } from "@/composables/systemErrors";
 import { safeInvoke, tauriAvailable } from "@/lib/tauri";
 
 export function useAppShell() {
-  const windowLabel = ref("");
+  const windowLabel = ref((window as unknown as { __TAURI_INTERNALS__?: { metadata?: { currentWindow?: { label?: string } } } }).__TAURI_INTERNALS__?.metadata?.currentWindow?.label ?? "main");
   const isFloatballWindow = computed(() => windowLabel.value === "floatball");
   const isPluginWindow = computed(() => windowLabel.value.startsWith("plugin-"));
   const isPanelWindow = computed(() => windowLabel.value === "panel");
@@ -23,8 +23,8 @@ export function useAppShell() {
   let disposed = false;
   let unlistenTray: (() => void) | undefined;
 
-  useWebviewHealth();
-  useWindowLifecycle({ onFocusGained: () => { void appIndex.refreshIfStale(); }, keepVisibleOnBlur: () => route.name === "plugin" || isPluginWindow.value || isCenterWindow.value });
+  useWebviewHealth(windowLabel.value === "main");
+  useWindowLifecycle({ onFocusGained: () => { void appIndex.refreshIfStale(); }, keepVisibleOnBlur: () => route.name === "plugin" || route.path.startsWith("/plugins") || isPluginWindow.value || isCenterWindow.value });
 
   async function handleTrayAction(action: string) {
     if (disposed || windowLabel.value !== "main") return;

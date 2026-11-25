@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 import { nextTick } from "vue";
 import { usePanelStore } from "./panel";
+import { useUiStateStore } from "./uiState";
 import type { LoadedPlugin } from "./plugins";
 
 describe("panel plugin references", () => {
@@ -16,6 +17,6 @@ describe("panel plugin references", () => {
     expect(store.entries).toHaveLength(1);
     expect(store.hasPlugin("fixture","main")).toBe(true);
     expect(store.hasPlugin("fixture","other")).toBe(false);
-    expect(JSON.parse(localStorage.getItem("mytools-panel-entries-v1") || "[]")[0]).toMatchObject({kind:"plugin",target:"fixture",feature:"main"});
+    expect((useUiStateStore().values["panel.entries"] as unknown[])[0]).toMatchObject({kind:"plugin",target:"fixture",feature:"main"});
   });
 });

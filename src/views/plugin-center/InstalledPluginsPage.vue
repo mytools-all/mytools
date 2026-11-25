@@ -9,6 +9,7 @@ import { safeInvoke } from "@/lib/tauri";
 import { usePluginsStore, type LoadedPlugin, type PluginOrigin } from "@/stores/plugins";
 import { useUsageStore } from "@/stores/usage";
 import { useCenterSearchStore } from "@/stores/centerSearch";
+import { persistedUiValue } from "@/stores/uiState";
 
 const props = defineProps<{ detached: boolean }>();
 const emit = defineEmits<{ detail: [name: string] }>();
@@ -20,7 +21,7 @@ async function checkUpdates(){await Promise.all([plugins.reload(),catalog.refres
 const usage = useUsageStore();
 const search = useCenterSearchStore();
 const router = useRouter();
-const enableFilter = ref("all");
+const enableFilter = persistedUiValue<string>("installed.filter", "all", (value): value is string => typeof value === "string" && ["all", "enabled", "disabled", "updates"].includes(value));
 const selected=ref(new Set<string>());
 const updating=computed(()=>catalog.updatingAll||!!catalog.busy);
 watch([enableFilter,()=>search.query],()=>{selected.value=new Set();});

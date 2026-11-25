@@ -11,7 +11,10 @@ pub mod system;
 
 pub mod screenshot;
 
-pub mod resources;
 pub mod resource_storage;
+pub mod resources;
 
 pub mod app_updates;
+
+pub mod audit;
+pub mod backups;

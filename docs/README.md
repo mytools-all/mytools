@@ -6,6 +6,8 @@
 
 ## 开始阅读
 
+- ZIP 备份恢复、日志和窗口状态：[数据维护说明](16-backup-and-maintenance.md)。
+
 - 主程序签名更新、自启与插件批量更新：[更新说明](host-updates.md)。
 
 - 资源统计口径与电脑助手：[资源管理与电脑助手](15-resources.md)。

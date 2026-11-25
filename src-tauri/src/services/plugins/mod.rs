@@ -3,8 +3,8 @@ use crate::services::settings::AppSettings;
 use mytools_core::capability::Origin;
 use mytools_core::plugin_loader::{scan_dir_enabled, LoadedPlugin};
 use mytools_core::plugin_mgmt::{
-    install_from_dir, install_from_tar_gz, install_from_zip, uninstall_plugin, PluginOrigins,
-    PluginState,
+    install_from_dir_checked, install_from_tar_gz_checked, install_from_zip_checked,
+    uninstall_plugin, PluginOrigins, PluginState,
 };
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::Sender;
@@ -26,6 +26,9 @@ pub struct PluginRegistry {
 }
 
 impl PluginRegistry {
+    pub fn lock_mutation(&self) -> Result<std::sync::MutexGuard<'_, ()>, String> {
+        self.mutation.lock().map_err(|e| e.to_string())
+    }
     pub fn new(state_path: PathBuf) -> Self {
         let state = PluginState::load(&state_path).unwrap_or_default();
         let origins_path =
@@ -50,6 +53,11 @@ impl PluginRegistry {
         let mut loaded = scan_dir_enabled(root, &|name| inner.state.is_enabled(name))
             .map_err(|e| e.to_string())?;
         for plugin in &mut loaded {
+            plugin.incompatible = mytools_core::compatibility::incompatibility(
+                &plugin.manifest,
+                env!("CARGO_PKG_VERSION"),
+                mytools_core::capability::HOST_API_VERSION,
+            );
             if let Some(origin) = inner.origins.origin_of(&plugin.manifest.name) {
                 plugin.origin = plugin.manifest.effective_origin(origin);
             }
@@ -140,6 +148,16 @@ impl PluginRegistry {
     }
 
     pub fn set_enabled(&self, name: &str, on: bool) -> Result<bool, String> {
+        if on {
+            if let Some(reason) = self
+                .list()
+                .into_iter()
+                .find(|plugin| plugin.key() == name)
+                .and_then(|plugin| plugin.incompatible)
+            {
+                return Err(reason);
+            }
+        }
         {
             let mut inner = self.inner.write().expect("plugin registry write");
             inner.state.set_enabled(name, on);
@@ -185,7 +203,8 @@ impl PluginRegistry {
         let root = self
             .root()
             .ok_or_else(|| "plugins root not set".to_string())?;
-        let name = install_from_dir(src, &root).map_err(|e| e.to_string())?;
+        let name = install_from_dir_checked(src, &root, &validate_compatibility)
+            .map_err(|e| e.to_string())?;
         self.rescan().map(|_| name)
     }
 
@@ -200,18 +219,36 @@ impl PluginRegistry {
             .map(|e| e.to_ascii_lowercase())
             .unwrap_or_default();
         let name = match ext.as_str() {
-            "tgz" | "gz" => install_from_tar_gz(pack, &root).map_err(|e| e.to_string())?,
-            "zip" => install_from_zip(pack, &root).map_err(|e| e.to_string())?,
+            "tgz" | "gz" => install_from_tar_gz_checked(pack, &root, &validate_compatibility)
+                .map_err(|e| e.to_string())?,
+            "zip" => install_from_zip_checked(pack, &root, &validate_compatibility)
+                .map_err(|e| e.to_string())?,
             _ => return Err(format!("unsupported archive type: .{}", ext)),
         };
         self.rescan().map(|_| name)
     }
 
-    pub fn update_pack(&self, pack: &Path, name: &str, from_version: &str, version: &str) -> Result<String, String> {
+    pub fn update_pack(
+        &self,
+        pack: &Path,
+        name: &str,
+        from_version: &str,
+        version: &str,
+    ) -> Result<String, String> {
         let _mutation = self.mutation.lock().map_err(|e| e.to_string())?;
-        let root = self.root().ok_or_else(|| "plugins root not set".to_string())?;
+        let root = self
+            .root()
+            .ok_or_else(|| "plugins root not set".to_string())?;
         let guard = self.inner.write().map_err(|e| e.to_string())?;
-        let result = mytools_core::plugin_mgmt::update_from_tar_gz(pack, &root, name, from_version, version).map_err(|e| e.to_string());
+        let result = mytools_core::plugin_mgmt::update_from_tar_gz_checked(
+            pack,
+            &root,
+            name,
+            from_version,
+            version,
+            &validate_compatibility,
+        )
+        .map_err(|e| e.to_string());
         drop(guard);
         let installed = result?;
         self.rescan()?;
@@ -224,6 +261,21 @@ impl PluginRegistry {
 }
 
 pub type SharedPluginRegistry = Arc<PluginRegistry>;
+
+fn validate_compatibility(
+    manifest: &mytools_core::manifest::PluginManifest,
+) -> Result<(), mytools_core::plugin_mgmt::PluginMgrError> {
+    match mytools_core::compatibility::incompatibility(
+        manifest,
+        env!("CARGO_PKG_VERSION"),
+        mytools_core::capability::HOST_API_VERSION,
+    ) {
+        Some(reason) => Err(mytools_core::plugin_mgmt::PluginMgrError::Incompatible(
+            reason,
+        )),
+        None => Ok(()),
+    }
+}
 
 pub fn effective_plugins_root(settings: &AppSettings, data_root: &Path) -> PathBuf {
     if let Some(dir) = std::env::var_os("MYTOOLS_PLUGINS_DIR") {

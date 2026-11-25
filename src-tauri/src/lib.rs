@@ -14,8 +14,22 @@ use tauri::{Emitter, Manager};
 
 pub fn run() {
     let mut context = tauri::generate_context!();
-    context.set_default_window_icon(Some(infrastructure::app_identity::icon().expect("invalid bundled MyTools icon")));
-    tauri::Builder::default()
+    context.set_default_window_icon(Some(
+        infrastructure::app_identity::icon().expect("invalid bundled MyTools icon"),
+    ));
+    let builder = tauri::Builder::default();
+    #[cfg(windows)]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, args, _| {
+        if !args.iter().any(|argument| argument == "--autostart") {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }
+    }));
+    builder
+        .manage(services::backups::Backups::default())
+        .manage(commands::window_layout::LayoutState::default())
         .manage(runtime::PluginSessions::default())
         .manage(runtime::CapabilityExecutor::default())
         .manage(runtime::DroppedFiles::default())
@@ -29,14 +43,36 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .on_window_event(|window, event| {
+            #[cfg(windows)]
+            if matches!(event, tauri::WindowEvent::Focused(true)) {
+                infrastructure::webview_idle::resume(window);
+            }
+            if matches!(
+                event,
+                tauri::WindowEvent::Moved(_) | tauri::WindowEvent::Resized(_)
+            ) {
+                commands::window_layout::changed(window);
+            }
             if let tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) = event {
-                if window.state::<runtime::DroppedFiles>().record(window.label(), paths.clone()) {
-                    tracing::info!(window=window.label(),count=paths.len(),"native window file drop");
-                    let _ = window.app_handle().emit(&format!("mytools:files-dropped:{}",window.label()), ());
+                if window
+                    .state::<runtime::DroppedFiles>()
+                    .record(window.label(), paths.clone())
+                {
+                    tracing::info!(
+                        window = window.label(),
+                        count = paths.len(),
+                        "native window file drop"
+                    );
+                    let _ = window
+                        .app_handle()
+                        .emit(&format!("mytools:files-dropped:{}", window.label()), ());
                 }
             }
             if matches!(event, tauri::WindowEvent::Destroyed) {
-                window.state::<runtime::LaunchContexts>().forget(window.label());
+                commands::window_layout::forget(window);
+                window
+                    .state::<runtime::LaunchContexts>()
+                    .forget(window.label());
                 window
                     .state::<runtime::PluginSessions>()
                     .forget(window.label());
@@ -45,9 +81,18 @@ pub fn run() {
         .on_webview_event(|webview, event| {
             if let tauri::WebviewEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) = event {
                 let window = webview.window();
-                if webview.state::<runtime::DroppedFiles>().record(window.label(), paths.clone()) {
-                    tracing::info!(window=window.label(),count=paths.len(),"native webview file drop");
-                    let _ = webview.app_handle().emit(&format!("mytools:files-dropped:{}",window.label()), ());
+                if webview
+                    .state::<runtime::DroppedFiles>()
+                    .record(window.label(), paths.clone())
+                {
+                    tracing::info!(
+                        window = window.label(),
+                        count = paths.len(),
+                        "native webview file drop"
+                    );
+                    let _ = webview
+                        .app_handle()
+                        .emit(&format!("mytools:files-dropped:{}", window.label()), ());
                 }
             }
         })
@@ -60,6 +105,14 @@ pub fn run() {
             commands::app_updates::app_update_install,
             commands::app_updates::app_autostart_status,
             commands::app_updates::app_autostart_set,
+            commands::backups::backup_info,
+            commands::backups::backup_last_result,
+            commands::backups::backup_export,
+            commands::backups::backup_preview,
+            commands::backups::backup_cancel_preview,
+            commands::backups::backup_restore,
+            commands::backups::backup_open_logs,
+            commands::backups::backup_diagnostics,
             commands::resources::resources_snapshot,
             commands::resources::resources_storage,
             commands::panel::panel_show,
@@ -103,6 +156,7 @@ pub fn run() {
             commands::plugin::plugin_install_dir,
             commands::plugin::plugin_install_pack,
             commands::plugin::plugin_open_dir,
+            commands::settings::settings_set_ui_state,
             commands::settings::settings_get,
             commands::settings::settings_set_theme,
             commands::settings::settings_set_usage,

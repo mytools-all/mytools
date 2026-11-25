@@ -24,7 +24,7 @@ fn show(app: &tauri::AppHandle, position: Option<(i32, i32)>) -> Result<(), Stri
     let window = if let Some(window) = app.get_webview_window("panel") {
         window
     } else {
-        WebviewWindowBuilder::new(app, "panel", WebviewUrl::App("index.html#/panel".into()))
+        WebviewWindowBuilder::new(app, "panel", WebviewUrl::App("panel.html".into()))
             .disable_drag_drop_handler()
             .title("我的面板")
             .inner_size(460.0, 420.0)

@@ -7,9 +7,9 @@
 //! `Origin::Custom` unless they match a shipped official package name.
 
 use std::io::Read;
-use tauri::Manager;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
+use tauri::Manager;
 
 use mytools_core::plugin_mgmt::is_safe_plugin_name;
 
@@ -140,6 +140,8 @@ fn install_npm_owned(
     registry: crate::services::plugins::SharedPluginRegistry,
     spec: String,
 ) -> Result<String, String> {
+    let sessions = app.state::<crate::runtime::PluginSessions>();
+    let _lease = sessions.begin_mutation()?;
     let spec = spec.trim();
     if spec.is_empty() {
         return Err("empty package spec".into());
@@ -149,6 +151,12 @@ fn install_npm_owned(
     let tmp = download_tarball(&tarball)?;
     // Always clean up the staged tarball, success or failure.
     let result = registry.install_pack(&tmp);
+    crate::services::backups::audit(
+        &app,
+        "plugin.install",
+        result.as_ref().ok().map(String::as_str),
+        result.is_ok(),
+    );
     let _ = std::fs::remove_file(&tmp);
     let name = result?;
     crate::commands::plugin::notify_plugins_changed(&app);
@@ -159,7 +167,10 @@ fn install_npm_owned(
 pub async fn plugin_update_npm(
     app: tauri::AppHandle,
     registry: tauri::State<'_, crate::services::plugins::SharedPluginRegistry>,
-    spec: String, code: String, from_version: String, version: String,
+    spec: String,
+    code: String,
+    from_version: String,
+    version: String,
 ) -> Result<String, String> {
     let registry = registry.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
@@ -167,15 +178,20 @@ pub async fn plugin_update_npm(
         if requested.as_deref() != Some(version.as_str()) || !is_safe_plugin_name(&code) {
             return Err("更新必须指定确定的插件身份和版本".to_string());
         }
-        let sessions=app.state::<crate::runtime::PluginSessions>();
-        let _lease=sessions.begin_update(&code)?;
+        let sessions = app.state::<crate::runtime::PluginSessions>();
+        let _lease = sessions.begin_update(&code)?;
         let tarball = resolve_tarball(&package, &requested)?;
         let tmp = download_tarball(&tarball)?;
         let result = registry.update_pack(&tmp, &code, &from_version, &version);
+        crate::services::backups::audit(&app, "plugin.update", Some(&code), result.is_ok());
         let _ = std::fs::remove_file(&tmp);
-        if result.is_ok() { crate::commands::plugin::notify_plugins_changed(&app); }
+        if result.is_ok() {
+            crate::commands::plugin::notify_plugins_changed(&app);
+        }
         result
-    }).await.map_err(|e| e.to_string())?
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[cfg(test)]

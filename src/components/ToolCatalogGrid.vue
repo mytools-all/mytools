@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, nextTick, onActivated, onBeforeUnmount, onMounted, ref } from "vue";
+import { persistedUiValue } from "@/stores/uiState";
+import { pluginCompatibility } from "@/lib/pluginCompatibility";
 import TopTabNav from "@/components/TopTabNav.vue";
 import { useToolCatalogStore } from "@/stores/toolCatalog";
 import { fallbackIconDataUri } from "@/lib/iconFallback";
@@ -8,9 +10,19 @@ import type { ToolEntry } from "@/data/toolCatalog";
 
 const store = useToolCatalogStore();
 const plugins = usePluginsStore();
+const scrollElement = ref<HTMLElement>();
+const scroll = persistedUiValue<number>("catalog.scroll", 0, (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0);
+let scrollTimer: ReturnType<typeof setTimeout> | undefined;
+function saveScroll() {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => { scroll.value = scrollElement.value?.scrollTop ?? 0; }, 300);
+}
+function restoreScroll() { void nextTick(() => { if (scrollElement.value) scrollElement.value.scrollTop = scroll.value; }); }
+onActivated(restoreScroll);
+onBeforeUnmount(() => { clearTimeout(scrollTimer); if (scrollElement.value) scroll.value = scrollElement.value.scrollTop; });
 withDefaults(defineProps<{sharedSearch?: boolean}>(), {sharedSearch:false});
 const emit = defineEmits<{detail:[name:string]}>();
-onMounted(() => { void store.initialize(); });
+onMounted(() => { void store.initialize().then(restoreScroll); });
 
 const tabs = computed(() => [
   { id: "all", label: "全部", count: store.visibleEntries.length },
@@ -44,7 +56,7 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
 </script>
 
 <template>
-  <div class="tc">
+  <div ref="scrollElement" class="tc" @scroll.passive="saveScroll">
     <div class="tc__head">
       <input
         v-if="!sharedSearch"
@@ -84,13 +96,14 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
         </header>
 
         <p class="tc__desc">{{ brief(entry) }}。</p>
+        <p class="tc__compat" :class="{'tc__compat--error':!pluginCompatibility(entry).compatible}">{{ pluginCompatibility(entry).message }}</p>
 
         <footer class="tc__foot">
           <span class="tc__ref">查看详情 →</span>
           <button
             v-if="['installable','updateable'].includes(store.stateOf(entry))"
             class="tc__btn tc__btn--primary"
-            :disabled="!!store.busy || store.updatingAll"
+            :disabled="!!store.busy || store.updatingAll || !pluginCompatibility(entry).compatible"
             @click.stop="onInstall(entry)"
           >
             {{ store.busy === entry.name ? "处理中…" : store.canUpdate(entry) ? "更新" : "安装" }}
@@ -109,6 +122,7 @@ function brief(entry: ToolEntry) { return entry.description.split(/[。！？\r\
 </template>
 
 <style scoped>
+.tc__compat { margin:0; font-size:11px; color:var(--text-dim); } .tc__compat--error { color:var(--danger,#df6565); }
 .tc {
   display: flex;
   flex-direction: column;

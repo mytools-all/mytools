@@ -14,7 +14,7 @@ export interface WebviewHealthSnapshot {
 const POLL_INTERVAL_MS = 5000;
 const SYSTEM_KEY = "system:webview";
 
-export function useWebviewHealth() {
+export function useWebviewHealth(enabled = true) {
   const health = ref<WebviewHealthSnapshot | null>(null);
   const errors = usePluginErrors();
   const route = useRoute();
@@ -23,7 +23,7 @@ export function useWebviewHealth() {
   let stopped = false;
 
   async function sample() {
-    if (stopped) return;
+    if (stopped || !enabled || document.hidden) return;
     const raw = await safeInvoke<{
       my_pid: number;
       live_pids: number[];
@@ -51,6 +51,7 @@ export function useWebviewHealth() {
   }
 
   function start() {
+    if (!enabled || timer !== null) return;
     stopped = false;
     void sample();
     timer = window.setInterval(sample, POLL_INTERVAL_MS);

@@ -269,6 +269,7 @@ describe("PluginManagerView (插件中心)", () => {
       decorations: false,
       width: 1024,
       height: 760,
+      layoutKey: "center",
     });
     wrapper.unmount();
     await flushPromises();
@@ -277,6 +278,7 @@ describe("PluginManagerView (插件中心)", () => {
       decorations: false,
       width: 720,
       height: 480,
+      layoutKey: "launcher",
     });
   });
 });

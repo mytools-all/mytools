@@ -11,6 +11,7 @@ import { usePluginsStore } from "@/stores/plugins";
 import { useSettingsStore } from "@/stores/settings";
 import { useToolCatalogStore } from "@/stores/toolCatalog";
 import { safeInvoke, tauriAvailable, isDetachedCenter } from "@/lib/tauri";
+import { persistedUiValue } from "@/stores/uiState";
 
 type Section = "store" | "installed" | "dev" | "resources" | "settings";
 const sections: { id: Section; label: string }[] = [
@@ -26,17 +27,18 @@ const plugins = usePluginsStore();
 const settings = useSettingsStore();
 const catalog = useToolCatalogStore();
 const detached = isDetachedCenter();
+const lastSection = persistedUiValue<Section>("center.section", "store", (value): value is Section => sections.some(section => section.id === value));
 const section = computed<Section>(() => {
-  const value = route.query.section;
+  const value = route.query.section ?? lastSection.value;
   return value === "installed" || value === "dev" || value === "resources" || value === "settings" ? value : "store";
 });
 const detailName = computed(() => (section.value === "store" || section.value === "installed") && typeof route.query.detail === "string" ? route.query.detail : "");
-function navTo(next: Section) { void router.push({path:"/plugins", query:{section:next}}); }
+function navTo(next: Section) { lastSection.value = next; void router.push({path:"/plugins", query:{section:next}}); }
 function showDetail(name: string) { void router.push({path:"/plugins",query:{...route.query,section:section.value,detail:name}}); }
 function closeDetail() { const query={...route.query}; delete query.detail; void router.replace({path:"/plugins",query}); }
 function layout(width: number, height: number) {
   if (!tauriAvailable() || detached) return;
-  void safeInvoke("window_set_layout", {resizable:true,decorations:false,width,height});
+  void safeInvoke("window_set_layout", {resizable:true,decorations:false,width,height,layoutKey:width===720?"launcher":"center"});
 }
 onMounted(() => {
   layout(1024,760);

@@ -13,6 +13,7 @@ import { useResultActions } from "@/composables/useResultActions";
 import { useAppShell } from "@/composables/useAppShell";
 import CapabilityConsentDialog from "@/components/CapabilityConsentDialog.vue";
 import AppUpdateReminder from "@/components/AppUpdateReminder.vue";
+import RestoreNotice from "@/components/RestoreNotice.vue";
 
 const active = useActivePluginStore();
 const router = useRouter();
@@ -86,6 +87,7 @@ onBeforeUnmount(() => {
   </div>
   <CapabilityConsentDialog />
   <AppUpdateReminder v-if="!isFloatballWindow && !isPluginWindow && !isPanelWindow" />
+  <RestoreNotice v-if="!isFloatballWindow && !isPluginWindow && !isPanelWindow && !isCenterWindow" />
 </template>
 
 <style>

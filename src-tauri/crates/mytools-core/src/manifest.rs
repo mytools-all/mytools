@@ -52,6 +52,8 @@ pub struct PluginManifest {
     /// current major version".
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub api_version: Option<u32>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub engines: BTreeMap<String, String>,
     /// Declared source hint (`official` / `ecosystem` / `custom`).
     /// Informational only: the host decides the effective origin and a
     /// manifest may never escalate its own privileges.
@@ -141,6 +143,14 @@ impl PluginManifest {
         let Ok(pkg) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
             return;
         };
+        if !self.engines.contains_key("mytools") {
+            if let Some(value) = pkg.pointer("/engines/mytools") {
+                self.engines.insert(
+                    "mytools".into(),
+                    value.as_str().unwrap_or("invalid requirement").into(),
+                );
+            }
+        }
         let str_field = |key: &str| {
             pkg.get(key)
                 .and_then(|v| v.as_str())

@@ -78,7 +78,14 @@ pub async fn window_set_layout(
     decorations: bool,
     width: Option<f64>,
     height: Option<f64>,
+    layout_key: Option<String>,
 ) -> Result<(), String> {
+    if let Some(key) = layout_key.as_deref() {
+        if window.label() != "main" || !matches!(key, "launcher" | "center") {
+            return Err("无效的窗口布局".into());
+        }
+        crate::commands::window_layout::suspend(window.app_handle(), window.label());
+    }
     window.set_resizable(resizable).map_err(|e| e.to_string())?;
     window
         .set_decorations(decorations)
@@ -87,8 +94,20 @@ pub async fn window_set_layout(
         (Some(w), Some(h)) if w > 0.0 && h > 0.0 => Some((w, h)),
         _ => None,
     };
-    position_on_active_monitor(&window, &window.app_handle().clone(), custom)
-        .map_err(|e| e.to_string())?;
+    if let Some(key) = layout_key {
+        if !window
+            .state::<SettingsState>()
+            .get()
+            .window_bounds
+            .contains_key(&key)
+        {
+            position_on_active_monitor(&window, window.app_handle(), custom)?;
+        }
+        crate::commands::window_layout::restore(&window, &key)?;
+    } else {
+        position_on_active_monitor(&window, &window.app_handle().clone(), custom)
+            .map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 

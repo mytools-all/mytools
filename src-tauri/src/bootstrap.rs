@@ -7,9 +7,17 @@ use tauri::{Listener, Manager};
 pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(windows)]
     {
-        app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+        app.handle()
+            .plugin(tauri_plugin_updater::Builder::new().build())?;
     }
     let (config_root, data_root) = initialize_storage(app);
+    crate::services::backups::apply_pending(
+        &config_root,
+        &data_root,
+        &app.package_info().version.to_string(),
+    )
+    .map_err(std::io::Error::other)?;
+    crate::services::audit::record(&data_root.join("logs"), "host.start", None, true);
     tracing::info!("MyTools starting up");
     crate::services::apps::index::warm();
     initialize_clipboard(app, &data_root);
@@ -17,9 +25,18 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     initialize_capabilities(app, &config_root)?;
     initialize_health(app);
     initialize_desktop(app, &settings);
+    if let Some(window) = app.get_webview_window("main") {
+        if let Err(error) = commands::window_layout::restore(&window, "launcher") {
+            tracing::warn!("launcher layout: {error}");
+        }
+    }
     initialize_file_drop(app.handle());
+    #[cfg(windows)]
+    crate::infrastructure::webview_idle::start(app.handle());
     crate::services::app_updates::initialize(app.handle());
-    if let Err(error) = commands::panel::initialize(app.handle(), settings.get().middle_panel_enabled) {
+    if let Err(error) =
+        commands::panel::initialize(app.handle(), settings.get().middle_panel_enabled)
+    {
         tracing::warn!("middle panel unavailable: {error}");
     }
     Ok(())
@@ -137,7 +154,9 @@ fn initialize_health(app: &tauri::App) {
 
 fn initialize_desktop(app: &tauri::App, settings: &SettingsState) {
     if let Some(window) = app.get_webview_window("main") {
-        if let Err(error) = crate::infrastructure::app_identity::apply(&window) { tracing::warn!("main window icon: {error}"); }
+        if let Err(error) = crate::infrastructure::app_identity::apply(&window) {
+            tracing::warn!("main window icon: {error}");
+        }
         let saved = settings.get();
         match (
             saved.main_x,
@@ -207,12 +226,12 @@ fn initialize_file_drop(app: &tauri::AppHandle) {
     #[cfg(windows)]
     {
         use tauri::{Emitter, Manager};
-        let app=app.clone();
+        let app = app.clone();
         tauri::async_runtime::spawn(async move {
-            let mut timer=tokio::time::interval(std::time::Duration::from_millis(750));
+            let mut timer = tokio::time::interval(std::time::Duration::from_millis(750));
             loop {
                 timer.tick().await;
-                let handle=app.clone();
+                let handle = app.clone();
                 if app.run_on_main_thread(move || {
                     for (label,window) in handle.webview_windows() {
                         if label!="main" && !label.starts_with("plugin-"){continue;}
@@ -229,5 +248,5 @@ fn initialize_file_drop(app: &tauri::AppHandle) {
         });
     }
     #[cfg(not(windows))]
-    let _=app;
+    let _ = app;
 }

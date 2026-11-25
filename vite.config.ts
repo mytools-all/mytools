@@ -16,6 +16,15 @@ export default defineConfig(() => ({
   },
 
   clearScreen: false,
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL("./index.html", import.meta.url)),
+        floatball: fileURLToPath(new URL("./floatball.html", import.meta.url)),
+        panel: fileURLToPath(new URL("./panel.html", import.meta.url)),
+      },
+    },
+  },
   server: {
     port: 1420,
     strictPort: true,

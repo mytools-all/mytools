@@ -28,23 +28,43 @@ const POSITION_OFFSET_PX: i32 = 30;
 static NEXT_LABEL_SEQ: AtomicU32 = AtomicU32::new(1);
 
 #[tauri::command]
-pub async fn plugin_center_open_window(app: tauri::AppHandle, section: String) -> Result<String, String> {
-    if !matches!(section.as_str(), "store" | "installed" | "dev" | "resources" | "settings") {
+pub async fn plugin_center_open_window(
+    app: tauri::AppHandle,
+    section: String,
+) -> Result<String, String> {
+    if !matches!(
+        section.as_str(),
+        "store" | "installed" | "dev" | "resources" | "settings"
+    ) {
         return Err("invalid plugin center section".into());
     }
     let label = "center";
     if let Some(window) = app.get_webview_window(label) {
         crate::infrastructure::app_identity::apply(&window)?;
-        window.eval(format!("location.hash='#/plugins?section={section}'")).map_err(|e| e.to_string())?;
+        window
+            .eval(format!("location.hash='#/plugins?section={section}'"))
+            .map_err(|e| e.to_string())?;
         window.show().map_err(|e| e.to_string())?;
         window.set_focus().map_err(|e| e.to_string())?;
     } else {
-        let window = WebviewWindowBuilder::new(&app, label, WebviewUrl::App(format!("index.html#/plugins?section={section}").into()))
-            .icon(crate::infrastructure::app_identity::icon()?).map_err(|error| error.to_string())?
-            .title("MyTools · 插件中心").inner_size(1024.0, 760.0)
-            .min_inner_size(720.0, 480.0).decorations(true).resizable(true)
-            .visible(false).disable_drag_drop_handler().build().map_err(|e| e.to_string())?;
+        let window = WebviewWindowBuilder::new(
+            &app,
+            label,
+            WebviewUrl::App(format!("index.html#/plugins?section={section}").into()),
+        )
+        .icon(crate::infrastructure::app_identity::icon()?)
+        .map_err(|error| error.to_string())?
+        .title("MyTools · 插件中心")
+        .inner_size(1024.0, 760.0)
+        .min_inner_size(720.0, 480.0)
+        .decorations(true)
+        .resizable(true)
+        .visible(false)
+        .disable_drag_drop_handler()
+        .build()
+        .map_err(|e| e.to_string())?;
         crate::infrastructure::app_identity::apply(&window)?;
+        crate::commands::window_layout::restore(&window, "center")?;
         window.show().map_err(|error| error.to_string())?;
         window.set_focus().map_err(|error| error.to_string())?;
     }
@@ -149,16 +169,22 @@ pub async fn plugin_open_window(
             .list()
             .into_iter()
             .find(|p| p.manifest.name == plugin_id)
-            .map(|p| p.manifest)
             .ok_or_else(|| format!("plugin '{plugin_id}' not found"))?
     };
+    if let Some(reason) = manifest.incompatible {
+        return Err(reason);
+    }
+    let manifest = manifest.manifest;
     let title = manifest
         .plugin_name
         .clone()
         .unwrap_or(manifest.name.clone());
     if from_panel.unwrap_or(false) {
-        if window.label() != "panel" { return Err("only the panel can transfer launch context".into()); }
-        app.state::<crate::runtime::LaunchContexts>().bind(&label, &plugin_id)?;
+        if window.label() != "panel" {
+            return Err("only the panel can transfer launch context".into());
+        }
+        app.state::<crate::runtime::LaunchContexts>()
+            .bind(&label, &plugin_id)?;
         app_url.push_str("?context=panel");
     }
 
@@ -198,7 +224,8 @@ pub async fn plugin_open_window(
     );
 
     let window = WebviewWindowBuilder::new(&app, &label, WebviewUrl::App(PathBuf::from(app_url)))
-        .icon(crate::infrastructure::app_identity::icon()?).map_err(|error| error.to_string())?
+        .icon(crate::infrastructure::app_identity::icon()?)
+        .map_err(|error| error.to_string())?
         .title(&title)
         .inner_size(rect.width as f64, rect.height as f64)
         .min_inner_size(MIN_WIDTH as f64, MIN_HEIGHT as f64)
@@ -212,6 +239,7 @@ pub async fn plugin_open_window(
         .build()
         .map_err(|e| format!("failed to build webview window: {e}"))?;
     crate::infrastructure::app_identity::apply(&window)?;
+    crate::commands::window_layout::restore(&window, &format!("plugin:{plugin_id}:{feature}"))?;
     window.show().map_err(|error| error.to_string())?;
     window.set_focus().map_err(|error| error.to_string())?;
 

@@ -14,6 +14,8 @@ export interface ToolEntry {
   description: string;
   category: string;
   version: string;
+  engines?: Record<string, string>;
+  apiVersion?: number;
   status: ToolStatus;
   capabilities: string[];
   features: string[];
@@ -67,6 +69,8 @@ export function parseToolCatalog(value: unknown): ToolEntry[] {
     const reference = p.reference === undefined ? undefined : record(p.reference);
     return {
       name, npm, version,
+      engines: p.engines === undefined ? undefined : {mytools:text(record(p.engines).mytools, 512)},
+      apiVersion: p.apiVersion === undefined ? undefined : Number.isSafeInteger(p.apiVersion) && Number(p.apiVersion) > 0 ? Number(p.apiVersion) : (()=>{throw Error("插件 API 版本无效");})(),
       title: text(p.title, 200), description: text(p.description), category: text(p.category, 80),
       author: text(p.author, 200), license: text(p.license, 100),
       status: p.published ? "ready" : "planned",

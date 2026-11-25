@@ -64,6 +64,10 @@ pub struct AppSettings {
     pub theme: Theme,
     #[serde(default)]
     pub update_mode: UpdateMode,
+    #[serde(default)]
+    pub ui_state: std::collections::BTreeMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub window_bounds: std::collections::BTreeMap<String, mytools_core::window_layout::Bounds>,
     #[serde(default = "default_hotkey")]
     pub hotkey: String,
     #[serde(default)]
@@ -104,6 +108,8 @@ impl Default for AppSettings {
             middle_panel_enabled: true,
             theme: Theme::default(),
             update_mode: UpdateMode::default(),
+            ui_state: Default::default(),
+            window_bounds: Default::default(),
             hotkey: default_hotkey(),
             pinned_plugins: Vec::new(),
             recent_plugins: Vec::new(),
@@ -139,6 +145,65 @@ impl Clone for SettingsState {
 }
 
 impl SettingsState {
+    pub fn snapshot_guard(&self) -> Result<std::sync::RwLockReadGuard<'_, AppSettings>, String> {
+        self.inner.read().map_err(|e| e.to_string())
+    }
+    pub fn set_window_bounds(
+        &self,
+        key: String,
+        bounds: mytools_core::window_layout::Bounds,
+    ) -> Result<(), String> {
+        if key.len() > 256
+            || !matches!(key.as_str(), "launcher" | "center") && !key.starts_with("plugin:")
+        {
+            return Err("无效的窗口类型".into());
+        }
+        if bounds.width == 0
+            || bounds.height == 0
+            || !bounds.scale.is_finite()
+            || bounds.scale <= 0.0
+        {
+            return Err("无效的窗口尺寸".into());
+        }
+        let mut inner = self.inner.write().map_err(|e| e.to_string())?;
+        let mut next = inner.clone();
+        if next.window_bounds.len() >= 256 && !next.window_bounds.contains_key(&key) {
+            return Err("窗口布局记录已达到上限".into());
+        }
+        next.window_bounds.insert(key, bounds);
+        std::fs::write(
+            &self.path,
+            serde_json::to_vec_pretty(&next).map_err(|e| e.to_string())?,
+        )
+        .map_err(|e| e.to_string())?;
+        *inner = next;
+        Ok(())
+    }
+    pub fn set_ui_state(&self, key: String, value: serde_json::Value) -> Result<(), String> {
+        if !matches!(
+            key.as_str(),
+            "panel.entries"
+                | "catalog.category"
+                | "catalog.query"
+                | "catalog.scroll"
+                | "center.query"
+                | "center.section"
+                | "preferences.category"
+                | "installed.filter"
+        ) {
+            return Err("未知的界面设置".into());
+        }
+        if serde_json::to_vec(&value).map_err(|e| e.to_string())?.len() > 512 * 1024 {
+            return Err("界面设置内容过大".into());
+        }
+        let mut inner = self.inner.write().map_err(|e| e.to_string())?;
+        let mut next = inner.clone();
+        next.ui_state.insert(key, value);
+        let bytes = serde_json::to_vec_pretty(&next).map_err(|e| e.to_string())?;
+        std::fs::write(&self.path, bytes).map_err(|e| e.to_string())?;
+        *inner = next;
+        Ok(())
+    }
     pub fn set_update_mode(&self, mode: UpdateMode) -> Result<(), String> {
         let mut inner = self.inner.write().map_err(|e| e.to_string())?;
         let mut next = inner.clone();
@@ -274,11 +339,11 @@ impl SettingsState {
     }
 
     fn save(&self) -> Result<(), String> {
-        let settings = self.get();
+        let settings = self.inner.read().map_err(|e| e.to_string())?;
         if let Some(parent) = self.path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
-        let bytes = serde_json::to_vec_pretty(&settings).map_err(|e| e.to_string())?;
+        let bytes = serde_json::to_vec_pretty(&*settings).map_err(|e| e.to_string())?;
         std::fs::write(&self.path, bytes).map_err(|e| e.to_string())
     }
 }

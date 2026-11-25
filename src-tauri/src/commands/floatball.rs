@@ -77,19 +77,22 @@ pub fn ensure_floatball(app: &tauri::AppHandle, settings: &SettingsState) -> tau
     };
     let _ = settings.set_floatball_position(x, y);
 
-    let window =
-        WebviewWindowBuilder::new(app, FLOATBALL_LABEL, WebviewUrl::App("index.html".into()))
-            .title("MyTools 悬浮球")
-            .inner_size(BALL_WIN_WIDTH, BALL_WIN_HEIGHT)
-            .resizable(false)
-            .decorations(false)
-            .transparent(true)
-            .shadow(false)
-            .always_on_top(true)
-            .skip_taskbar(true)
-            .visible(true)
-            .focused(false)
-            .build()?;
+    let window = WebviewWindowBuilder::new(
+        app,
+        FLOATBALL_LABEL,
+        WebviewUrl::App("floatball.html".into()),
+    )
+    .title("MyTools 悬浮球")
+    .inner_size(BALL_WIN_WIDTH, BALL_WIN_HEIGHT)
+    .resizable(false)
+    .decorations(false)
+    .transparent(true)
+    .shadow(false)
+    .always_on_top(true)
+    .skip_taskbar(true)
+    .visible(true)
+    .focused(false)
+    .build()?;
 
     window.set_position(PhysicalPosition::new(x, y))?;
     window.set_size(PhysicalSize::new(

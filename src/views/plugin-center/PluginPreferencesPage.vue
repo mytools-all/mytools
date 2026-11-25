@@ -5,6 +5,7 @@ import TopTabNav from "@/components/TopTabNav.vue";
 import GrantBrowser from "@/components/GrantBrowser.vue";
 import CatalogSourcesPanel from "./CatalogSourcesPanel.vue";
 import AboutPanel from "./AboutPanel.vue";
+import BackupPanel from "./BackupPanel.vue";
 import GeneralUpdateSettings from "@/components/GeneralUpdateSettings.vue";
 import { usePluginsStore } from "@/stores/plugins";
 import { useGrantsStore } from "@/stores/grants";
@@ -44,6 +45,7 @@ const SETTINGS_KEYWORDS: Record<SettingsCategory, string[]> = {
   plugins: ["插件", "目录", "安装", "扫描", "plugin", "root", "install"],
   data: ["目录授权", "授权", "目录", "grant", "permission", "access"],
   shortcuts: ["快捷键", "唤起", "热键", "hotkey", "shortcut"],
+  backup: ["备份", "恢复", "日志", "诊断", "backup", "restore"],
   about: ["关于", "版本", "about", "version"],
 };
 
@@ -114,7 +116,6 @@ async function rescan() {
       </p>
 
       <template v-if="settings.settingsCategory === 'appearance'">
-        <GeneralUpdateSettings />
         <div class="pc__settings-block">
           <h4 class="pc__side-h">主题</h4>
           <div class="pc__row pc__row--wrap">
@@ -132,6 +133,7 @@ async function rescan() {
           </div>
         </div>
 
+        <GeneralUpdateSettings section="updates" />
         <div class="pc__settings-block">
           <h4 class="pc__side-h">常驻</h4>
           <label class="pc__settings-toggle">
@@ -155,6 +157,7 @@ async function rescan() {
             <span class="pc__hint">单击打开主页，右键打开我的面板，拖动调整位置</span>
           </label>
         </div>
+        <GeneralUpdateSettings section="startup" />
       </template>
 
       <template v-else-if="settings.settingsCategory === 'shortcuts'">
@@ -217,6 +220,7 @@ async function rescan() {
         <GrantBrowser title="目录授权" description="按插件或授权目录查看目录访问权限。撤销后，插件再次访问需重新授权。" directory :records="directoryRows" :loading="dirGrants.loading" :error="dirGrants.error" :revoke="dirGrants.revoke" @refresh="dirGrants.load()" />
       </template>
 
+      <BackupPanel v-else-if="settings.settingsCategory === 'backup'" />
       <template v-else>
         <AboutPanel />
       </template>

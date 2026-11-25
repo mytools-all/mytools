@@ -3,6 +3,7 @@ use crate::services::plugins::{effective_plugins_root, SharedPluginRegistry};
 use crate::services::settings::SettingsState;
 use mytools_core::plugin_loader::LoadedPlugin;
 use std::path::{Path, PathBuf};
+use tauri::Manager;
 
 fn data_root(app: &tauri::AppHandle) -> PathBuf {
     crate::infrastructure::paths::data_root(app)
@@ -64,6 +65,8 @@ pub async fn plugin_reload(
     settings: tauri::State<'_, SettingsState>,
     root: Option<String>,
 ) -> Result<usize, String> {
+    let sessions = app.state::<crate::runtime::PluginSessions>();
+    let _lease = sessions.begin_mutation()?;
     let path = match root {
         Some(r) if !r.trim().is_empty() => PathBuf::from(r),
         _ => effective_plugins_root(&settings.get(), &data_root(&app)),
@@ -90,6 +93,8 @@ pub async fn plugin_set_root(
     settings: tauri::State<'_, SettingsState>,
     root: String,
 ) -> Result<String, String> {
+    let sessions = app.state::<crate::runtime::PluginSessions>();
+    let _lease = sessions.begin_mutation()?;
     let trimmed = root.trim().to_string();
     if trimmed.is_empty() {
         return Err("插件目录不能为空".into());
@@ -108,6 +113,8 @@ pub async fn plugin_reset_root(
     registry: tauri::State<'_, SharedPluginRegistry>,
     settings: tauri::State<'_, SettingsState>,
 ) -> Result<String, String> {
+    let sessions = app.state::<crate::runtime::PluginSessions>();
+    let _lease = sessions.begin_mutation()?;
     settings.set_plugin_root(None)?;
     let path = effective_plugins_root(&settings.get(), &data_root(&app));
     std::fs::create_dir_all(&path).map_err(|e| e.to_string())?;
@@ -132,7 +139,10 @@ pub async fn plugin_enable(
     registry: tauri::State<'_, SharedPluginRegistry>,
     code: String,
 ) -> Result<(), String> {
+    let sessions = app.state::<crate::runtime::PluginSessions>();
+    let _lease = sessions.begin_mutation()?;
     registry.set_enabled(&code, true)?;
+    crate::services::backups::audit(&app, "plugin.enable", Some(&code), true);
     notify_plugins_changed(&app);
     Ok(())
 }
@@ -143,7 +153,10 @@ pub async fn plugin_disable(
     registry: tauri::State<'_, SharedPluginRegistry>,
     code: String,
 ) -> Result<(), String> {
+    let sessions = app.state::<crate::runtime::PluginSessions>();
+    let _lease = sessions.begin_mutation()?;
     registry.set_enabled(&code, false)?;
+    crate::services::backups::audit(&app, "plugin.disable", Some(&code), true);
     notify_plugins_changed(&app);
     Ok(())
 }
@@ -154,7 +167,11 @@ pub async fn plugin_uninstall(
     registry: tauri::State<'_, SharedPluginRegistry>,
     code: String,
 ) -> Result<(), String> {
-    registry.uninstall(&code)?;
+    let sessions = app.state::<crate::runtime::PluginSessions>();
+    let _lease = sessions.begin_update(&code)?;
+    let result = registry.uninstall(&code);
+    crate::services::backups::audit(&app, "plugin.uninstall", Some(&code), result.is_ok());
+    result?;
     notify_plugins_changed(&app);
     Ok(())
 }
@@ -165,7 +182,16 @@ pub async fn plugin_install_dir(
     registry: tauri::State<'_, SharedPluginRegistry>,
     dir: String,
 ) -> Result<String, String> {
-    let name = registry.install_dir(Path::new(&dir))?;
+    let sessions = app.state::<crate::runtime::PluginSessions>();
+    let _lease = sessions.begin_mutation()?;
+    let result = registry.install_dir(Path::new(&dir));
+    crate::services::backups::audit(
+        &app,
+        "plugin.install",
+        result.as_ref().ok().map(String::as_str),
+        result.is_ok(),
+    );
+    let name = result?;
     notify_plugins_changed(&app);
     Ok(name)
 }
@@ -176,7 +202,16 @@ pub async fn plugin_install_pack(
     registry: tauri::State<'_, SharedPluginRegistry>,
     pack: String,
 ) -> Result<String, String> {
-    let name = registry.install_pack(Path::new(&pack))?;
+    let sessions = app.state::<crate::runtime::PluginSessions>();
+    let _lease = sessions.begin_mutation()?;
+    let result = registry.install_pack(Path::new(&pack));
+    crate::services::backups::audit(
+        &app,
+        "plugin.install",
+        result.as_ref().ok().map(String::as_str),
+        result.is_ok(),
+    );
+    let name = result?;
     notify_plugins_changed(&app);
     Ok(name)
 }

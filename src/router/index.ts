@@ -1,12 +1,11 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from "vue-router";
-import LauncherView from "@/views/LauncherView.vue";
 
 const routes: RouteRecordRaw[] = [
   { path: "/panel", name: "my-panel", component: () => import("@/views/MyPanelView.vue") },
   {
     path: "/",
     name: "launcher",
-    component: LauncherView,
+    component: () => import("@/views/LauncherView.vue"),
   },
   {
     path: "/tool/calculator",

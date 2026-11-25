@@ -2,13 +2,14 @@
 import { onMounted } from "vue";
 import AppUpdateStatus from "./AppUpdateStatus.vue";
 import { useAppUpdatesStore, type UpdateMode } from "@/stores/appUpdates";
+defineProps<{section:"updates"|"startup"}>();
 
 const updates = useAppUpdatesStore();
 onMounted(() => { void updates.initialize().then(() => updates.refreshAutostart()); });
 </script>
 
 <template>
-  <div class="pc__settings-block">
+  <div v-if="section==='startup'" class="pc__settings-block">
     <h4 class="pc__side-h">启动</h4>
     <label class="pc__settings-toggle">
       <input class="pc__checkbox" type="checkbox" :checked="updates.autostart === true" :disabled="updates.savingAutostart || updates.autostart === null" @change="updates.setAutostart(($event.target as HTMLInputElement).checked)" />
@@ -17,7 +18,7 @@ onMounted(() => { void updates.initialize().then(() => updates.refreshAutostart(
     </label>
     <p v-if="updates.autostartError" class="general-update__error" role="alert">{{ updates.autostartError }} <button class="pc__btn" @click="updates.refreshAutostart()">重试</button></p>
   </div>
-  <div class="pc__settings-block">
+  <div v-if="section==='updates'" class="pc__settings-block">
     <h4 class="pc__side-h">主程序更新</h4>
     <label class="general-update__mode">更新方式
       <select class="general-update__select" :value="updates.state.mode" :disabled="updates.savingMode" @change="updates.setMode(($event.target as HTMLSelectElement).value as UpdateMode)">

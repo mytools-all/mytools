@@ -26,9 +26,16 @@ pub async fn app_update_check(window: tauri::Window) -> Result<Snapshot, String>
 #[tauri::command]
 pub fn app_update_set_mode(window: tauri::Window, mode: UpdateMode) -> Result<Snapshot, String> {
     trusted(&window)?;
-    window
+    let result = window
         .state::<Updates>()
-        .set_mode(window.app_handle(), mode)
+        .set_mode(window.app_handle(), mode);
+    crate::services::backups::audit(
+        window.app_handle(),
+        "settings.update-mode",
+        None,
+        result.is_ok(),
+    );
+    result
 }
 
 #[tauri::command]
@@ -68,7 +75,14 @@ pub fn app_autostart_set(window: tauri::Window, enabled: bool) -> Result<bool, S
     trusted(&window)?;
     #[cfg(windows)]
     {
-        crate::infrastructure::autostart::set_enabled(enabled)
+        let result = crate::infrastructure::autostart::set_enabled(enabled);
+        crate::services::backups::audit(
+            window.app_handle(),
+            "settings.autostart",
+            None,
+            result.is_ok(),
+        );
+        result
     }
     #[cfg(not(windows))]
     {

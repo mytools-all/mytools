@@ -41,6 +41,9 @@ importers:
       pinia:
         specifier: ^2.3.0
         version: 2.3.0(typescript@6.0.3)(vue@3.5.42(typescript@6.0.3))
+      semver:
+        specifier: 7.7.3
+        version: 7.7.3
       vue:
         specifier: ^3.5.13
         version: 3.5.42(typescript@6.0.3)
@@ -63,6 +66,9 @@ importers:
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
+      '@types/semver':
+        specifier: 7.7.1
+        version: 7.7.1
       '@vitejs/plugin-vue':
         specifier: ^6.0.7
         version: 6.0.9(vite@8.3.0(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))(vue@3.5.42(typescript@6.0.3))
@@ -1103,6 +1109,9 @@ packages:
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
+
+  '@types/semver@7.7.1':
+    resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
 
   '@types/sinonjs__fake-timers@8.1.5':
     resolution: {integrity: sha512-mQkU2jY8jJEF7YHjHvsQO8+3ughTL1mcnn96igfhONmR+fUPSKIkefQYpSe8bsly2Ep7oQbn/6VG5/9/0qcArQ==}
@@ -2904,6 +2913,11 @@ packages:
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
+  semver@7.7.3:
+    resolution: {integrity: sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==}
+    engines: {node: '>=10'}
+    hasBin: true
+
   semver@7.8.5:
     resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
@@ -4164,6 +4178,8 @@ snapshots:
 
   '@types/normalize-package-data@2.4.4': {}
 
+  '@types/semver@7.7.1': {}
+
   '@types/sinonjs__fake-timers@8.1.5': {}
 
   '@types/stack-utils@2.0.3': {}
@@ -4255,7 +4271,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.71.0
       debug: 4.4.3(supports-color@8.1.1)
       minimatch: 10.2.6
-      semver: 7.8.5
+      semver: 7.7.3
       tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
@@ -6293,6 +6309,8 @@ snapshots:
       ret: 0.5.0
 
   safer-buffer@2.1.2: {}
+
+  semver@7.7.3: {}
 
   semver@7.8.5: {}
 

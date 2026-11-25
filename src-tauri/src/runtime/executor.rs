@@ -5,6 +5,7 @@ use tokio::sync::Semaphore;
 
 pub struct CapabilityExecutor {
     slots: Arc<Semaphore>,
+    capacity: u32,
 }
 
 impl Default for CapabilityExecutor {
@@ -17,7 +18,18 @@ impl CapabilityExecutor {
     pub fn new(concurrency: usize) -> Self {
         Self {
             slots: Arc::new(Semaphore::new(concurrency)),
+            capacity: concurrency as u32,
         }
+    }
+
+    pub async fn quiesce(&self) -> Result<tokio::sync::OwnedSemaphorePermit, String> {
+        tokio::time::timeout(
+            std::time::Duration::from_secs(30),
+            self.slots.clone().acquire_many_owned(self.capacity),
+        )
+        .await
+        .map_err(|_| "插件操作尚未结束，请稍后再备份".to_string())?
+        .map_err(|e| e.to_string())
     }
 
     pub async fn execute<F>(&self, capability: &str, handler: F) -> Result<Value, CapabilityError>

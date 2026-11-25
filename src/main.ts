@@ -5,6 +5,7 @@ import { router } from "@/router";
 import { installMyToolsApi } from "@/composables/mytools";
 import { useSettingsStore } from "@/stores/settings";
 import { tauriAvailable } from "@/lib/tauri";
+import { useUiStateStore } from "@/stores/uiState";
 import "./styles/global.css";
 
 console.log("[MyTools] tauriAvailable:", tauriAvailable());
@@ -15,6 +16,6 @@ app.use(pinia);
 app.use(router);
 
 const settings = useSettingsStore(pinia);
-void settings.init().finally(() => {
+void Promise.allSettled([settings.init(),useUiStateStore(pinia).load()]).finally(() => {
   app.mount("#app");
 });

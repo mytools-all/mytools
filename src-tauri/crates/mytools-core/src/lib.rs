@@ -14,11 +14,13 @@
 //!   - builtin:   first-class command catalog (calculator / JSON / …)
 //!   - capability: capability registry, permission policy (foundation layer)
 
+pub mod backup;
 pub mod builtin;
 pub mod calculator;
 pub mod capability;
 pub mod clipboard;
 pub mod color;
+pub mod compatibility;
 pub mod db;
 pub mod manifest;
 pub mod panel;
@@ -27,6 +29,7 @@ pub mod plugin_loader;
 pub mod plugin_mgmt;
 pub mod search;
 pub mod startmenu;
+pub mod window_layout;
 
 pub use clipboard::{ClipboardEntry, ClipboardError, ClipboardStore, MAX_ENTRIES};
 pub use plugin_loader::{find_plugins_root, scan_dir, scan_dir_enabled, LoadedPlugin, LoaderError};

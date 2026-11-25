@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { pluginCompatibility } from "@/lib/pluginCompatibility";
 import { computed, ref, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useToolCatalogStore } from "@/stores/toolCatalog";
@@ -25,6 +26,7 @@ const installed=computed(()=>plugins.plugins.find(p=>p.manifest.name===props.nam
 const title=computed(()=>entry.value?.title || (installed.value ? pluginDisplayName(installed.value.manifest) : props.name));
 const features=computed(()=>entry.value?.features || installed.value?.manifest.features.map(f=>f.explain || f.code) || []);
 const capabilities=computed(()=>installed.value?.declaredCapabilities || entry.value?.capabilities || []);
+const compatibility=computed(()=>pluginCompatibility(entry.value || installed.value?.manifest || {}));
 const status=computed(()=>entry.value && catalog.canUpdate(entry.value) ? "可更新" : installed.value ? installed.value.incompatible ? "不兼容" : installed.value.enabled ? "已安装" : "已停用" : entry.value?.status==='builtin' ? "随应用内置" : entry.value?.status==='ready' ? "可安装" : "开发中");
 const notes=computed(()=>entry.value?.notes.length ? entry.value.notes : ["安装后点击“打开”进入插件，也可从主页搜索启动。","涉及真实文件、剪贴板或网络的功能按能力声明申请授权。"]);
 function back(){const query={...route.query};delete query.detail;void router.push({path:"/plugins",query});}
@@ -42,9 +44,9 @@ function safeUrl(url?:string){try{const parsed=new URL(url || "");return ["https
         <img :src="installed?.icon || entry?.icon || fallbackIconDataUri(title)" :alt="title" />
         <div class="pd__heading"><h1>{{ title }}</h1><p>{{ entry?.description || installed?.manifest.description }}</p><span>{{ status }} · v{{ installed?.manifest.version || entry?.version }}<template v-if="entry"> · {{ entry.category }}</template></span></div>
         <div class="pd__actions">
-          <button v-if="entry && catalog.canUpdate(entry)" class="pd__primary" :disabled="!!catalog.busy || catalog.updatingAll" @click="catalog.install(entry)">{{ catalog.busy===name?'更新中…':`更新至 v${entry.version}` }}</button>
+          <button v-if="entry && catalog.canUpdate(entry)" class="pd__primary" :disabled="!!catalog.busy || catalog.updatingAll || !compatibility.compatible" @click="catalog.install(entry)">{{ catalog.busy===name?'更新中…':`更新至 v${entry.version}` }}</button>
           <button v-if="installed" class="pd__primary" :disabled="!installed.enabled || !!installed.incompatible || !installed.manifest.features.length" @click="openPlugin">打开</button>
-          <button v-else-if="entry?.status === 'ready'" class="pd__primary" :disabled="!!catalog.busy || catalog.updatingAll" @click="catalog.install(entry)">{{ catalog.busy === name ? '安装中…' : '安装' }}</button>
+          <button v-else-if="entry?.status === 'ready'" class="pd__primary" :disabled="!!catalog.busy || catalog.updatingAll || !compatibility.compatible" @click="catalog.install(entry)">{{ catalog.busy === name ? '安装中…' : '安装' }}</button>
           <button v-if="installed" :disabled="pending || !!catalog.busy || catalog.updatingAll" @click="run(()=>plugins.setEnabled(name,!installed?.enabled))">{{ installed.enabled ? '停用' : '启用' }}</button>
           <button v-if="installed" :disabled="pending || !!catalog.busy || catalog.updatingAll" @click="run(()=>plugins.openDir(name))">打开目录</button>
           <button v-if="installed" class="pd__uninstall" :disabled="pending || !!catalog.busy || catalog.updatingAll" @click="confirmUninstall=true">卸载</button>
@@ -53,6 +55,7 @@ function safeUrl(url?:string){try{const parsed=new URL(url || "");return ["https
       <div v-if="confirmUninstall && installed" class="pd__confirm" role="group" aria-label="确认卸载插件"><p>确认卸载 {{ title }}？只移除插件程序，保留插件存储的数据。</p><button :disabled="pending || !!catalog.busy || catalog.updatingAll" @click="confirmUninstall=false">取消</button><button class="pd__uninstall" :disabled="pending || !!catalog.busy || catalog.updatingAll" @click="uninstallPlugin">{{ pending ? '卸载中…' : '确认卸载' }}</button></div>
       <p v-if="notice || catalog.notice" role="status">{{ notice || catalog.notice }}</p>
       <p v-if="error || catalog.error" class="pd__error" role="alert">{{ error || catalog.error }}</p>
+      <p class="pd__muted" :class="{'pd__error':!compatibility.compatible}">{{ compatibility.message }}</p>
       <p v-if="installed?.incompatible" class="pd__error">{{ installed.incompatible }}</p>
       <div class="pd__layout">
 <div class="pd__content">
