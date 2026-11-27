@@ -40,6 +40,13 @@ try {
             Start-Sleep -Seconds 1
         }
     }
+    $taskPolicies = foreach ($taskPolicyRoot in @('HKCU:\Software\Policies\Microsoft\Edge\WebView2','HKLM:\Software\Policies\Microsoft\Edge\WebView2')) {
+        if (Test-Path -LiteralPath $taskPolicyRoot) {
+            Get-ItemProperty -LiteralPath $taskPolicyRoot
+            Get-ChildItem -LiteralPath $taskPolicyRoot -Recurse | Get-ItemProperty
+        }
+    }
+    ConvertTo-Json -InputObject @($taskPolicies) -Depth 5 | Set-Content (Join-Path $taskArtifacts 'webview2-policies.json')
     $taskDriverLog = Join-Path $taskArtifacts 'edgedriver.log'
     $taskDriver = Start-Process -FilePath $taskDriverPath -ArgumentList @('--port=4440','--verbose',('"--log-path=' + $taskDriverLog + '"')) -RedirectStandardOutput (Join-Path $taskArtifacts 'edgedriver-stdout.log') -RedirectStandardError (Join-Path $taskArtifacts 'edgedriver-stderr.log') -WindowStyle Hidden -PassThru
     $taskReady = $false

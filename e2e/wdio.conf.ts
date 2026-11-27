@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 const application = process.env.MYTOOLS_E2E_EXE ?? join(process.cwd(), "src-tauri", "target", "release", "mytools.exe");
 const capability: WebdriverIO.Capabilities = process.env.MYTOOLS_E2E_DRIVER === "edge"
-  ? {browserName: "webview2", "wdio:enforceWebDriverClassic": true, "ms:edgeOptions": {binary: application}}
+  ? {browserName: "webview2", "wdio:enforceWebDriverClassic": true, "ms:edgeOptions": {binary: application, args: ["--edge-webview-switches=--remote-debugging-port=0"]}}
   : {browserName: "mytools", "wdio:enforceWebDriverClassic": true, "tauri:options": {application}} as WebdriverIO.Capabilities;
 
 export const config: Options.Testrunner & { capabilities: WebdriverIO.Capabilities[] } = {
