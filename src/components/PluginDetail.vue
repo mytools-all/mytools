@@ -5,6 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useToolCatalogStore } from "@/stores/toolCatalog";
 import { usePluginsStore } from "@/stores/plugins";
 import { useUsageStore } from "@/stores/usage";
+import { useSettingsStore } from "@/stores/settings";
 import { pluginDisplayName } from "@/lib/pluginPresentation";
 import { fallbackIconDataUri } from "@/lib/iconFallback";
 import { safeInvoke, isDetachedCenter } from "@/lib/tauri";
@@ -27,6 +28,8 @@ const title=computed(()=>entry.value?.title || (installed.value ? pluginDisplayN
 const features=computed(()=>entry.value?.features || installed.value?.manifest.features.map(f=>f.explain || f.code) || []);
 const capabilities=computed(()=>installed.value?.declaredCapabilities || entry.value?.capabilities || []);
 const compatibility=computed(()=>pluginCompatibility(entry.value || installed.value?.manifest || {}));
+const settings=useSettingsStore();
+function hostUpdates(){settings.settingsCategory="appearance";void router.push({path:"/plugins",query:{section:"settings"}});}
 const status=computed(()=>entry.value && catalog.canUpdate(entry.value) ? "可更新" : installed.value ? installed.value.incompatible ? "不兼容" : installed.value.enabled ? "已安装" : "已停用" : entry.value?.status==='builtin' ? "随应用内置" : entry.value?.status==='ready' ? "可安装" : "开发中");
 const notes=computed(()=>entry.value?.notes.length ? entry.value.notes : ["安装后点击“打开”进入插件，也可从主页搜索启动。","涉及真实文件、剪贴板或网络的功能按能力声明申请授权。"]);
 function back(){const query={...route.query};delete query.detail;void router.push({path:"/plugins",query});}
@@ -56,6 +59,8 @@ function safeUrl(url?:string){try{const parsed=new URL(url || "");return ["https
       <p v-if="notice || catalog.notice" role="status">{{ notice || catalog.notice }}</p>
       <p v-if="error || catalog.error" class="pd__error" role="alert">{{ error || catalog.error }}</p>
       <p class="pd__muted" :class="{'pd__error':!compatibility.compatible}">{{ compatibility.message }}</p>
+      <button v-if="!compatibility.compatible && compatibility.action==='host'" @click="hostUpdates">查看 MyTools 更新</button>
+      <button v-else-if="!compatibility.compatible && compatibility.action==='plugin'" :disabled="catalog.updatingAll || !!catalog.busy" @click="catalog.refresh(true)">检查插件更新</button>
       <p v-if="installed?.incompatible" class="pd__error">{{ installed.incompatible }}</p>
       <div class="pd__layout">
 <div class="pd__content">

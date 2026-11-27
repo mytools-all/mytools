@@ -4,7 +4,7 @@
     {
       "name": "mytools-demo",
       "npm": "@mytools-all/mytools-demo",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "repository": "https://github.com/mytools-all/mytools-demo",
       "published": true,
       "title": "MyTools Demo",
@@ -42,12 +42,16 @@
       "replaces": [
         "demo-hello",
         "mytools-hello"
-      ]
+      ],
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-calc",
       "npm": "@mytools-all/mytools-calc",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "repository": "https://github.com/mytools-all/mytools-calc",
       "published": true,
       "title": "计算稿纸",
@@ -81,12 +85,16 @@
         "package": "rubick-plugin-calc",
         "label": "计算器（rubick-plugin-calc）",
         "url": "https://www.npmjs.com/package/rubick-plugin-calc"
-      }
+      },
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-clipboard",
       "npm": "@mytools-all/mytools-clipboard",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "repository": "https://github.com/mytools-all/mytools-clipboard",
       "published": true,
       "title": "系统剪贴板",
@@ -119,12 +127,16 @@
         "package": "rubick-system-clipboard",
         "label": "系统剪贴板（rubick-system-clipboard）",
         "url": "https://www.npmjs.com/package/rubick-system-clipboard"
-      }
+      },
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-color",
       "npm": "@mytools-all/mytools-color",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "repository": "https://github.com/mytools-all/mytools-color",
       "published": true,
       "title": "颜色助手",
@@ -158,12 +170,16 @@
         "package": "rubick-color",
         "label": "颜色助手（rubick-color）",
         "url": "https://www.npmjs.com/package/rubick-color"
-      }
+      },
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-color-picker",
       "npm": "@mytools-all/mytools-color-picker",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "repository": "https://github.com/mytools-all/mytools-color-picker",
       "published": true,
       "title": "屏幕取色器",
@@ -197,12 +213,16 @@
         "package": "rubick-system-color-picker",
         "label": "取色器（rubick-system-color-picker）",
         "url": "https://www.npmjs.com/package/rubick-system-color-picker"
-      }
+      },
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-ctool",
       "npm": "@mytools-all/mytools-ctool",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-ctool",
       "published": true,
       "title": "Ctool",
@@ -236,12 +256,16 @@
         "package": "rubick-ctool",
         "label": "Ctool（rubick-ctool）",
         "url": "https://www.npmjs.com/package/rubick-ctool"
-      }
+      },
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-ipconfig",
       "npm": "@mytools-all/mytools-ipconfig",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-ipconfig",
       "published": true,
       "title": "ipconfig",
@@ -274,12 +298,16 @@
         "package": "ip-config-rubick-plugin",
         "label": "ip-config（ip-config-rubick-plugin）",
         "url": "https://www.npmjs.com/package/ip-config-rubick-plugin"
-      }
+      },
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-json",
       "npm": "@mytools-all/mytools-json",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-json",
       "published": true,
       "title": "JSON 编辑器",
@@ -309,12 +337,16 @@
         "package": "rubick-json-editor",
         "label": "JSON 编辑器（rubick-json-editor）",
         "url": "https://www.npmjs.com/package/rubick-json-editor"
-      }
+      },
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-markdown",
       "npm": "@mytools-all/mytools-markdown",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "repository": "https://github.com/mytools-all/mytools-markdown",
       "published": true,
       "title": "Markdown 编辑器",
@@ -348,12 +380,16 @@
         "package": "rubick-markdown",
         "label": "Markdown 编辑器（rubick-markdown）",
         "url": "https://www.npmjs.com/package/rubick-markdown"
-      }
+      },
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-ocr",
       "npm": "@mytools-all/mytools-ocr",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "repository": "https://github.com/mytools-all/mytools-ocr",
       "published": true,
       "title": "图片 OCR",
@@ -370,7 +406,9 @@
         "clipboard.write",
         "fs.exporttext",
         "clipboard.read",
-        "shell.open"
+        "shell.open",
+        "fs.pickfiles",
+        "fs.globalsearch"
       ],
       "features": [
         "面板截图识字联动",
@@ -393,12 +431,16 @@
         "自动识别仅在插件打开期间运行；历史只保存文字，最近 30 条。",
         "连接不可达时提示前往官方发布页下载安装，默认拒绝；不自动执行安装程序。",
         "自动识别和面板截图联动需要支持图片读取、截图上下文的新宿主。"
-      ]
+      ],
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-rename",
       "npm": "@mytools-all/mytools-rename",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/mytools-all/mytools-rename",
       "published": true,
       "title": "文件批量重命名",
@@ -434,12 +476,16 @@
         "package": "utools-batch-rename",
         "label": "文件批量重命名（rubick-plugin-rename）",
         "url": "https://www.u-tools.cn/plugins/topic/74/"
-      }
+      },
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-search",
       "npm": "@mytools-all/mytools-search",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "repository": "https://github.com/mytools-all/mytools-search",
       "published": true,
       "title": "本地搜索",
@@ -477,12 +523,16 @@
         "package": "utools-searchmaster",
         "label": "uTools 文件搜索（Everything）",
         "url": "https://www.u-tools.cn/plugins/detail/搜索大师/"
-      }
+      },
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-calendar",
       "npm": "@mytools-all/mytools-calendar",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "published": true,
       "title": "我的日历",
       "description": "公农历、传统节日与每日待办，轻松安排每一天。",
@@ -523,12 +573,16 @@
         "Todo 导入导出与批量标签管理在 GitHub 源码 0.1.1 中提供，按维护者要求暂不更新 npm 版本。"
       ],
       "homepage": "https://github.com/mytools-all/mytools-calendar#readme",
-      "icon": "https://raw.githubusercontent.com/mytools-all/mytools-calendar/main/icon.svg"
+      "icon": "https://raw.githubusercontent.com/mytools-all/mytools-calendar/main/icon.svg",
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-clock",
       "npm": "@mytools-all/mytools-clock",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "published": true,
       "title": "打卡",
       "description": "成对记录上下班，计算最早下班时间与多周期工时统计",
@@ -560,7 +614,11 @@
         "Excel 导出为可直接打开的 XML 工作簿，JSON 为完整备份；不连接企业考勤系统。"
       ],
       "homepage": "https://github.com/mytools-all/mytools-clock#readme",
-      "icon": "https://raw.githubusercontent.com/mytools-all/mytools-clock/main/icon.svg"
+      "icon": "https://raw.githubusercontent.com/mytools-all/mytools-clock/main/icon.svg",
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     },
     {
       "name": "mytools-computer-assistant",
@@ -588,7 +646,7 @@
         "仅插件打开且可见时监控，资源提醒默认关闭。",
         "应用分组依据同路径进程树或已核实的服务配置，不能保证完全复制任务管理器分组。"
       ],
-      "version": "0.1.1",
+      "version": "0.1.2",
       "published": true,
       "title": "电脑助手",
       "description": "本机 CPU、内存、网速与磁盘空间监控，支持进程排行和可选提醒",
@@ -597,7 +655,11 @@
         "storage.get",
         "storage.set",
         "system.notify"
-      ]
+      ],
+      "engines": {
+        "mytools": ">=0.2.0 <0.3.0"
+      },
+      "apiVersion": 1
     }
   ]
 }

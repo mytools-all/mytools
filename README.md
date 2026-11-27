@@ -1,6 +1,6 @@
 # MyTools
 
-轻量级 Windows 插件工具箱，基于 Tauri 2、Vue 3 和 Rust。版本 0.1.0，MIT 许可。
+轻量级 Windows 插件工具箱，基于 Tauri 2、Vue 3 和 Rust。版本 0.2.0，MIT 许可。
 
 宿主提供主页、插件管理、鼠标中键面板、托盘、悬浮球、权限管理和能力桥接。工具插件独立开发、安装和发布，不编译进宿主。
 
@@ -10,7 +10,7 @@
 
 ## 下载正式版
 
-前往 [MyTools Releases](https://github.com/mytools-all/mytools/releases/latest)，下载 Windows x64 的 `MyTools_0.1.0_x64-setup.exe` 安装包。也提供包含主程序和 WebView2Loader.dll 的免安装运行 zip，解压后运行 mytools.exe；用户数据仍保存在 AppData，不是随目录移动的数据便携版。
+前往 [MyTools Releases](https://github.com/mytools-all/mytools/releases/latest)，下载 Windows x64 的 `MyTools_0.2.0_x64-setup.exe` 安装包。也提供包含主程序和 WebView2Loader.dll 的免安装运行 zip，解压后运行 mytools.exe；用户数据仍保存在 AppData，不是随目录移动的数据便携版。
 
 校验文件为 SHA256SUMS.txt。第一次启动默认隐藏在托盘，可按 Alt+Space 或通过托盘“主页”打开。插件单独安装，不内置于安装包。完整版本记录见 [CHANGELOG.md](CHANGELOG.md)。
 
@@ -20,7 +20,7 @@
 - [插件 npm 索引](https://github.com/mytools-all/mytools-home/blob/main/plugins/database.json)
 - npm 统一作用域：`@mytools-all`
 
-图片剪贴板、面板截图和电脑助手依赖当前 main 分支新增的宿主能力。现有 0.1.0 正式安装包不包含这些更新，使用相关插件前请按下文从源码构建新版宿主。
+本轮官方插件声明支持 MyTools >=0.2.0 <0.3.0。0.1.0 用户请先安装 0.2.0；旧版可能不识别插件兼容声明。主程序只通过 GitHub Release 发布，插件通过 npm 独立发布。
 
 ## 从零编译与安装（Windows x64）
 

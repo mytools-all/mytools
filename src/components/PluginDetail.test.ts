@@ -61,7 +61,8 @@ describe("plugin details",()=>{
     await wrapper.find(".pd__confirm .pd__uninstall").trigger("click");
     await flushPromises();
     expect(wrapper.text()).toContain("file locked");
-    expect(wrapper.find(".pd__primary").text()).toBe("打开");
+    expect(wrapper.findAll(".pd__primary").some(button=>button.text()==="打开")).toBe(true);
+    expect(plugins.plugins[0]?.manifest.name).toBe("mytools-search");
     wrapper.unmount();
   });
 });

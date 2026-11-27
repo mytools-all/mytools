@@ -24,6 +24,18 @@ vi.mock("@/lib/tauri", () => ({
 }));
 
 describe("tool catalog store", () => {
+  it("rejects incompatible updates without touching the installed plugin",async()=>{
+    const {usePluginsStore}=await import("@/stores/plugins");
+    const plugins=usePluginsStore(),catalog=useToolCatalogStore();
+    const entry={...TOOL_CATALOG[0]!,version:"9.0.0",engines:{mytools:">=0.3.0 <0.4.0"},status:"ready" as const};
+    plugins.plugins=[{manifest:{name:entry.name,version:"0.1.0"}} as LoadedPlugin];
+    catalog.entries=[entry];
+    expect(catalog.updates).toHaveLength(0);
+    expect(await catalog.install(entry)).toBeNull();
+    expect(catalog.error).toContain("请升级");
+    expect(plugins.plugins[0]!.manifest.version).toBe("0.1.0");
+    expect(invokeMock).not.toHaveBeenCalledWith("plugin_update_npm",expect.anything());
+  });
   beforeEach(() => {
     localStorage.clear();
     setActivePinia(createPinia());

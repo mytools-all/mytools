@@ -10,7 +10,7 @@ describe("catalog index validation", () => {
     expect(demo.keywords).toContain("mytools-demo");
     expect(demo.replaces).toContain("demo-hello");
     expect(demo.npm).toBe("@mytools-all/mytools-demo");
-    expect(demo.npmSpec).toBe("@mytools-all/mytools-demo@0.1.1");
+    expect(demo.npmSpec).toBe(`${demo.npm}@${demo.version}`);
     const calendar = entries.find(entry => entry.name === "mytools-calendar")!;
     expect(calendar.status).toBe("ready");
     expect(calendar.npmSpec).toBe(`@mytools-all/mytools-calendar@${calendar.version}`);

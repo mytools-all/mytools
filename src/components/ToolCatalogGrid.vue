@@ -34,6 +34,7 @@ const tabs = computed(() => [
 ]);
 
 function statusLabel(entry: ToolEntry): string {
+  if(!pluginCompatibility(entry).compatible)return "不兼容当前版本";
   const state = store.stateOf(entry);
   if (state === "updateable") return "可更新";
   if (state === "installed") return "已安装";
