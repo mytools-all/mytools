@@ -1,7 +1,7 @@
 {
   "name": "mytools",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "轻量级插件化工具箱",
   "author": {
     "name": "mytools-all（QALeng）",

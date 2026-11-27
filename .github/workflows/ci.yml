@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
 
 concurrency:
@@ -201,3 +202,43 @@ jobs:
           name: e2e-diagnostics
           path: e2e-artifacts/
           retention-days: 7
+
+
+  release:
+    name: Prepare release draft
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [frontend, rust, backend-coverage, build, e2e]
+    runs-on: windows-2025
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install Rust (GNU)
+        run: |
+          rustup toolchain install stable-x86_64-pc-windows-gnu --profile minimal
+          echo "RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu" >> $env:GITHUB_ENV
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+      - run: pnpm install --frozen-lockfile
+      - name: Build signed release and create draft
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/release-ci.ps1
+      - name: Preserve release artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: release-artifacts/
+          if-no-files-found: ignore

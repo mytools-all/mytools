@@ -47,4 +47,21 @@ describe("MyTools smoke", () => {
     await browser.waitUntil(async () => !(await browser.getUrl()).includes("#/plugins"), {timeout:5000});
     await expect(search).toBeDisplayed();
   });
+  it("closes the main window to tray and can show it again", async () => {
+    await $("[data-testid='app-menu-btn']").click();
+    await $(".md__item--danger").click();
+    try {
+      await browser.waitUntil(async () => browser.execute(async () => {
+        const host = (window as unknown as {__TAURI_INTERNALS__: {invoke: (command: string, args?: unknown) => Promise<unknown>}}).__TAURI_INTERNALS__;
+        return !(await host.invoke("plugin:window|is_visible", {label: "main"}));
+      }), {timeout: 5000, timeoutMsg: "Main window remained visible after closing"});
+    } finally {
+      await browser.execute(async () => {
+        const host = (window as unknown as {__TAURI_INTERNALS__: {invoke: (command: string) => Promise<unknown>}}).__TAURI_INTERNALS__;
+        await host.invoke("window_show");
+      });
+    }
+    await expect($(".search-box")).toBeDisplayed();
+  });
+
 });

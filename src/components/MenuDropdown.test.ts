@@ -43,13 +43,23 @@ describe("MenuDropdown", () => {
     return { wrapper, router, active, search };
   }
 
+  it("hides the main window through the host command", async () => {
+    const { wrapper } = await mountMenu();
+    const { safeInvoke } = await import("@/lib/tauri");
+    vi.mocked(safeInvoke).mockClear();
+    await wrapper.find(".md__item--danger").trigger("click");
+    await flushPromises();
+    expect(safeInvoke).toHaveBeenCalledWith("window_hide");
+    expect(wrapper.emitted("close")).toBeTruthy();
+  });
+
   it("renders the always-present items", async () => {
     const { wrapper } = await mountMenu();
     const labels = wrapper.findAll(".md__item-label").map((n) => n.text());
     expect(labels).toContain("插件商店");
     expect(labels).toContain("偏好设置");
     expect(labels).toContain("分离窗口");
-    expect(labels).toContain("退出");
+    expect(labels).toContain("关闭窗口");
   });
 
   it("hides the plugin info block when no plugin is active", async () => {

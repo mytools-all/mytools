@@ -31,3 +31,7 @@ pwsh -NoProfile -File scripts/build-update.ps1 -SigningKey <本机私钥绝对�
 “已安装 → 可更新”支持单个更新、选择更新、全选当前搜索结果及更新全部。更改搜索条件或分类会清空选择，避免更新不可见项。更新全部始终指全部可更新插件。安装串行进行，失败后继续其他插件并汇总原因。
 
 更新中的插件不能新开会话，已打开的插件也不能覆盖安装；先保存并关闭对应插件，再重试。更新保持现有插件数据、启用状态及权限记录。主程序更新方式不改变插件策略。
+
+## 自动生成发布草稿
+
+推送与源码版本一致的版本标签（如 v0.2.1）后，CI 必须先通过前端、Rust、核心覆盖率、构建和界面测试，再签名构建 NSIS、生成 ZIP 和更新清单、上传到 GitHub Release 草稿。仓库 Secrets 需要 TAURI_SIGNING_PRIVATE_KEY，加密密钥另需 TAURI_SIGNING_PRIVATE_KEY_PASSWORD。草稿不会成为公开最新版；维护者核对附件后手动点击 Publish release。主程序不发布 npm。

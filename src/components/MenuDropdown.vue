@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useActivePluginStore } from "@/stores/activePlugin";
 import { useSearchStore } from "@/stores/search";
 import { usePluginsStore } from "@/stores/plugins";
-import { safeInvoke, tauriAvailable } from "@/lib/tauri";
+import { safeInvoke } from "@/lib/tauri";
 
 const emit = defineEmits<{
   close: [];
@@ -82,17 +82,11 @@ async function onDetach() {
 }
 
 async function onExit() {
-  if (!tauriAvailable()) {
-    emit("close");
-    return;
-  }
   try {
-    const { getCurrentWindow } = await import("@tauri-apps/api/window");
-    await getCurrentWindow().close();
-  } catch {
-    /* ignore */
+    await safeInvoke("window_hide");
+  } finally {
+    emit("close");
   }
-  emit("close");
 }
 
 function onClickOutside(e: MouseEvent) {
@@ -163,8 +157,8 @@ void plugins;
 
     <div class="md__section">
       <button class="md__item md__item--danger" type="button" role="menuitem" @click="onExit">
-        <span class="md__item-label">退出</span>
-        <span class="md__item-hint">关闭主窗口</span>
+        <span class="md__item-label">关闭窗口</span>
+        <span class="md__item-hint">保留托盘运行</span>
       </button>
     </div>
   </div>

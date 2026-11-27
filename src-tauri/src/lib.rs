@@ -96,6 +96,19 @@ pub fn run() {
                 }
             }
         })
+        .on_page_load(|webview, _payload| {
+            #[cfg(windows)]
+            if let Err(error) = webview.with_webview(|platform| unsafe {
+                let result = platform.controller().CoreWebView2()
+                    .and_then(|view| view.Settings())
+                    .and_then(|settings| settings.SetAreDefaultContextMenusEnabled(false));
+                if let Err(error) = result {
+                    tracing::warn!("disable default context menu: {error}");
+                }
+            }) {
+                tracing::warn!("configure webview context menu: {error}");
+            }
+        })
         .setup(bootstrap::setup)
         .invoke_handler(tauri::generate_handler![
             commands::app_updates::app_update_status,
