@@ -75,11 +75,11 @@ Get-Process tauri-driver,msedgedriver -ErrorAction SilentlyContinue | Stop-Proce
 
 | Job | 运行环境 | 内容 |
 |---|---|---|
-| **frontend** | windows-2022 | `pnpm install` → `lint:frontend` → `type-check` → `test:coverage`（含门禁） |
-| **rust** | windows-2022（GNU stable） | `lint:backend`（clippy `-D warnings`）→ `cargo test --workspace` |
+| **frontend** | windows-2025 | `pnpm install` → `lint:frontend` → `type-check` → `test:coverage`（含门禁） |
+| **rust** | windows-2025（GNU stable） | `lint:backend`（clippy `-D warnings`）→ `cargo test --workspace` |
 | **backend-coverage** | ubuntu-22.04 | `cargo-llvm-cov --workspace --fail-under-lines 50` |
-| **build** | windows-2022 | `pnpm tauri build --no-bundle` → 上传产物 |
-| **e2e** | windows-2022 | 下载产物 → 装 msedgedriver → 起 tauri-driver → `pnpm test:e2e` |
+| **build** | windows-2025 | `pnpm tauri build --no-bundle` → 上传产物 |
+| **e2e** | windows-2025 | 下载产物 → 装 msedgedriver → 起 tauri-driver → `pnpm test:e2e` |
 
 并发控制：`concurrency: { group: ci-${{ github.ref }}, cancel-in-progress: true }`。
 
@@ -107,7 +107,7 @@ Get-Process tauri-driver,msedgedriver -ErrorAction SilentlyContinue | Stop-Proce
 | 主题 | 现象 | 处置 |
 |---|---|---|
 | **后端覆盖率** | Windows + GNU stable 报 `E0463: can't find crate for 'profiler_builtins'` | 本机不跑后端覆盖率，**CI 在 ubuntu-22.04 跑** |
-| **E2E 本地冒烟** | Edge Dev Channel 与 msedgedriver Stable 版本不匹配 → session 建立失败且无输出 | 本机跳过；CI 用 windows-2022 + Edge Stable。必须本地跑时把 Edge 切 Stable 并装匹配 msedgedriver |
+| **E2E 本地冒烟** | Edge Dev Channel 与 msedgedriver Stable 版本不匹配 → session 建立失败且无输出 | 本机跳过；CI 用 windows-2025 + Edge Stable。必须本地跑时把 Edge 切 Stable 并装匹配 msedgedriver |
 
 ## 9. 手动冒烟 Checklist
 
