@@ -79,7 +79,7 @@ Get-Process tauri-driver,msedgedriver -ErrorAction SilentlyContinue | Stop-Proce
 | **rust** | windows-2025（GNU stable） | `lint:backend`（clippy `-D warnings`）→ `cargo test --workspace` |
 | **backend-coverage** | ubuntu-22.04 | `cargo-llvm-cov --workspace --fail-under-lines 50` |
 | **build** | windows-2025 | `pnpm tauri build --no-bundle` → 上传产物 |
-| **e2e** | windows-2025 | 下载产物 → 装 msedgedriver → 起 tauri-driver → `pnpm test:e2e` |
+| **e2e** | windows-2025 | 下载产物 → 装匹配 WebView2 的 msedgedriver → 直接连接 EdgeDriver → `pnpm test:e2e` |
 
 并发控制：`concurrency: { group: ci-${{ github.ref }}, cancel-in-progress: true }`。
 
@@ -159,3 +159,9 @@ Windows 排除端口与占用端口都可能造成固定端口不可绑定，应
 核心测试使用临时数据根目录，覆盖所选插件恢复时保留其他命名空间、主程序本机路径保留、SQLite 快照、篡改与不安全路径拒绝、恢复事务中断回退以及 Windows 文件占用导致中途替换失败时的完整回滚。不得为验证恢复而覆盖真实用户数据。
 
 界面测试覆盖只预览不写入、覆盖确认默认取消、确认后仅恢复所选项。实机检查导出与预览、窗口重启前后位置、轻量窗口、单实例唤起和空闲休眠后重新打开。性能记录使用相同窗口和内存统计口径，单独记录工作集与私有工作集，不比较不同口径或声称未经测试的目标。
+
+### 云端界面测试诊断
+
+云端使用 `scripts/run-e2e-ci.ps1` 启动 EdgeDriver 并开启详细日志，`MYTOOLS_E2E_DRIVER=edge` 选择 WebView2 原生能力；本地默认仍经 tauri-driver。浏览器临时目录交由驱动管理，不设置 `WEBVIEW2_USER_DATA_FOLDER`，避免覆盖驱动创建的目录。脚本仅允许在 GitHub Actions 临时环境运行。
+
+无论测试成功或失败，`e2e-diagnostics` 均保留 EdgeDriver 详细日志、WebView2 日志（若生成）、MyTools 文件日志（若启动到日志初始化）、进程采样、调试端口文件内容与 Windows 应用错误。浏览器完整用户目录不上传；会话创建失败时没有页面截图属于正常情况。

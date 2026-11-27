@@ -3,9 +3,12 @@ import { browser } from "@wdio/globals";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-type TauriCapability = WebdriverIO.Capabilities & { "tauri:options": { application: string } };
+const application = process.env.MYTOOLS_E2E_EXE ?? join(process.cwd(), "src-tauri", "target", "release", "mytools.exe");
+const capability: WebdriverIO.Capabilities = process.env.MYTOOLS_E2E_DRIVER === "edge"
+  ? {browserName: "webview2", "wdio:enforceWebDriverClassic": true, "ms:edgeOptions": {binary: application}}
+  : {browserName: "mytools", "wdio:enforceWebDriverClassic": true, "tauri:options": {application}} as WebdriverIO.Capabilities;
 
-export const config: Options.Testrunner & { capabilities: TauriCapability[] } = {
+export const config: Options.Testrunner & { capabilities: WebdriverIO.Capabilities[] } = {
   runner: "local",
   specs: ["./**/*.test.ts"],
   framework: "mocha",
@@ -17,17 +20,7 @@ export const config: Options.Testrunner & { capabilities: TauriCapability[] } = 
   port: 4440,
   path: "/",
   connectionRetryCount: 0,
-  capabilities: [
-    {
-      browserName: "mytools",
-      "wdio:enforceWebDriverClassic": true,
-      "tauri:options": {
-        application:
-          process.env.MYTOOLS_E2E_EXE ??
-          join(process.cwd(), "src-tauri", "target", "release", "mytools.exe"),
-      },
-    },
-  ],
+  capabilities: [capability],
   mochaOpts: {
     ui: "bdd",
     timeout: 30_000,
